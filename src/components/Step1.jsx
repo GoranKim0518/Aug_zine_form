@@ -1,4 +1,3 @@
-// src/components/Step1.jsx
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { trackFieldFocus, trackFieldBlur } from '../lib/analytics.js';
@@ -15,10 +14,9 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
   const charCount = contentValue.length;
   const isValidLength = charCount >= 500 && charCount <= 1000;
 
-  // 입력할 때마다 부모(App.jsx) state 및 localStorage에 실시간 자동 저장
   useEffect(() => {
     onUpdate({ content: contentValue });
-  }, [contentValue, onUpdate]);
+  }, [contentValue]);
 
   const onSubmit = (data) => {
     if (isValidLength) {

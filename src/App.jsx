@@ -1,13 +1,13 @@
-// src/App.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProgressBar from './components/ProgressBar.jsx';
 import Step1 from './components/Step1.jsx';
 import Step2 from './components/Step2.jsx';
 import Step3 from './components/Step3.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { trackFieldFocus } from './lib/analytics.js';
+import { captureUtmParams, getStoredUtmParams } from './lib/utm.js';
+import { supabase } from './lib/supabase.js';
 
-// 기본 폼 스키마 정의
 const INITIAL_FORM_DATA = {
   content: '',
   pen_name_intro: '',
@@ -20,8 +20,8 @@ const INITIAL_FORM_DATA = {
 export default function App() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
-  // localStorage 훅 연결 (자동 저장 & 새로고침 시 자동 복원)
   const [formData, setFormData, removeFormData] = useLocalStorage(
     'aug_zine_draft',
     INITIAL_FORM_DATA
@@ -29,7 +29,10 @@ export default function App() {
 
   const TOTAL_STEPS = 2;
 
-  // 모바일 탭 이탈 감지
+  useEffect(() => {
+    captureUtmParams();
+  }, []);
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && currentStep <= TOTAL_STEPS) {
@@ -41,13 +44,13 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [currentStep]);
 
-  // 각 Step에서 입력값이 변경될 때 실시간 데이터 업데이트
-  const handleUpdateFormData = (stepData) => {
+  // useCallback 적용으로 무한 루프 차단
+  const handleUpdateFormData = useCallback((stepData) => {
     setFormData((prev) => ({
       ...prev,
       ...stepData,
     }));
-  };
+  }, [setFormData]);
 
   const handleNextStep = (step1Data) => {
     handleUpdateFormData(step1Data);
@@ -58,26 +61,41 @@ export default function App() {
     setCurrentStep(1);
   };
 
-  // 최종 제출 처리
   const handleSubmitAll = async (step2Data) => {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
-    const finalData = { ...formData, ...step2Data };
+    setSubmitError(null);
+
+    const mergedData = { ...formData, ...step2Data };
+    const utmParams = getStoredUtmParams();
+
+    const payload = {
+      content: mergedData.content || '',
+      pen_name_intro: mergedData.pen_name_intro || '',
+      phone: mergedData.phone || null,
+      instagram_id: mergedData.instagram_id || null,
+      referral_source: mergedData.referral_source || '',
+      referral_source_other: mergedData.referral_source === '기타' ? mergedData.referral_source_other : null,
+      utm_source: utmParams.utm_source || null,
+      utm_medium: utmParams.utm_medium || null,
+      utm_campaign: utmParams.utm_campaign || null,
+      utm_content: utmParams.utm_content || null,
+      utm_term: utmParams.utm_term || null,
+    };
 
     try {
-      console.log('최종 제출 데이터:', finalData);
-      
-      // 모의 네트워크 제출 지연 (1초)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { data, error } = await supabase
+        .from('submissions')
+        .insert([payload]);
 
-      // 제출 성공 시 localStorage 임시 저장 데이터 즉시 삭제
+      if (error) throw error;
+
       removeFormData();
-      
-      setCurrentStep(3); // 완료 화면으로 이동
+      setCurrentStep(3);
     } catch (error) {
-      console.error('제출 실패:', error);
-      alert('제출 도중 오류가 발생했습니다. 다시 시도해 주세요.');
+      console.error('Supabase 제출 에러:', error);
+      setSubmitError('원고 제출 처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
     } finally {
       setIsSubmitting(false);
     }
@@ -93,6 +111,12 @@ export default function App() {
       <div className="w-full max-w-lg space-y-4">
         {currentStep <= TOTAL_STEPS && (
           <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+        )}
+
+        {submitError && (
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg shadow-sm">
+            {submitError}
+          </div>
         )}
 
         {currentStep === 1 && (

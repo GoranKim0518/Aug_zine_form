@@ -1,4 +1,3 @@
-// src/components/Step2.jsx
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { trackFieldFocus, trackFieldBlur } from '../lib/analytics.js';
@@ -15,20 +14,15 @@ export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmi
     mode: 'onTouched',
   });
 
-  // 모든 폼 입력 필드 감시
-  const watchedFields = watch();
+  const selectedReferral = watch('referral_source');
 
-  // 입력할 때마다 실시간으로 localStorage 자동 반영
+  // 구독 패턴으로 무한 루프 방지
   useEffect(() => {
-    onUpdate(watchedFields);
-  }, [
-    watchedFields.pen_name_intro,
-    watchedFields.phone,
-    watchedFields.instagram_id,
-    watchedFields.referral_source,
-    watchedFields.referral_source_other,
-    onUpdate
-  ]);
+    const subscription = watch((value) => {
+      onUpdate(value);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, onUpdate]);
 
   const onSubmit = async (data) => {
     await onNext(data);
@@ -115,12 +109,11 @@ export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmi
           ))}
         </div>
 
-        {/* '기타' 선택 시 동적 입력 필드 */}
-        {watchedFields.referral_source === '기타' && (
+        {selectedReferral === '기타' && (
           <div className="pt-2 pl-7">
             <input
               {...register('referral_source_other', {
-                required: watchedFields.referral_source === '기타' ? '기타 경로를 직접 입력해 주세요.' : false,
+                required: selectedReferral === '기타' ? '기타 경로를 직접 입력해 주세요.' : false,
               })}
               onFocus={() => trackFieldFocus('referral_source_other', 2)}
               onBlur={(e) => trackFieldBlur('referral_source_other', 2, !!e.target.value)}
