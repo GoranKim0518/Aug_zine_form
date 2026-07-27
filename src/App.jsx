@@ -16,12 +16,10 @@ export default function App() {
 
   const TOTAL_STEPS = 2;
 
-  // 1. GA4 초기화 및 기본 페이지뷰 전송 (태그 자동 감지용)
+  // 1. GA4 초기화 및 기본 페이지뷰 전송
   useEffect(() => {
     if (GA_MEASUREMENT_ID) {
       ReactGA.initialize(GA_MEASUREMENT_ID);
-      
-      // 💡 이 한 줄이 들어가야 구글 웹사이트 테스트에서 감지 완료가 뜹니다!
       ReactGA.send({ 
         hitType: "pageview", 
         page: window.location.pathname + window.location.search 
@@ -29,7 +27,7 @@ export default function App() {
     }
   }, []);
 
-  // 2. 단계 이동 시 퍼널 이벤트 전송
+  // 2. 단계 이동 시 GA4 퍼널 이벤트 전송
   useEffect(() => {
     if (GA_MEASUREMENT_ID) {
       ReactGA.event({
@@ -39,6 +37,11 @@ export default function App() {
       });
     }
   }, [currentStep]);
+
+  // 자식 컴포넌트(Step1, Step2)에서 입력값을 실시간 업데이트할 때 사용
+  const handleUpdateForm = (stepData) => {
+    setFormData((prev) => ({ ...prev, ...stepData }));
+  };
 
   const handleNextStep = (stepData) => {
     setFormData((prev) => ({ ...prev, ...stepData }));
@@ -67,7 +70,7 @@ export default function App() {
 
       if (error) throw error;
 
-      // 최종 제출 성공 이벤트
+      // 제출 성공 이벤트 전송
       if (GA_MEASUREMENT_ID) {
         ReactGA.event({
           category: 'Form_Funnel',
@@ -97,13 +100,18 @@ export default function App() {
         )}
 
         {currentStep === 1 && (
-          <Step1 onNext={handleNextStep} defaultValues={formData} />
+          <Step1
+            onNext={handleNextStep}
+            onUpdate={handleUpdateForm}
+            defaultValues={formData}
+          />
         )}
 
         {currentStep === 2 && (
           <Step2
             onNext={handleSubmitForm}
             onPrev={handlePrevStep}
+            onUpdate={handleUpdateForm}
             defaultValues={formData}
             isSubmitting={isSubmitting}
           />
