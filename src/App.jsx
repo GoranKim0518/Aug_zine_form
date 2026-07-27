@@ -1,10 +1,15 @@
+// src/App.jsx
 import { useState, useEffect, useCallback } from 'react';
 import ProgressBar from './components/ProgressBar.jsx';
 import Step1 from './components/Step1.jsx';
 import Step2 from './components/Step2.jsx';
 import Step3 from './components/Step3.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
-import { trackFieldFocus } from './lib/analytics.js';
+import {
+  trackPageOpen,
+  trackSubmitSuccess,
+  trackFieldFocus,
+} from './lib/analytics.js';
 import { captureUtmParams, getStoredUtmParams } from './lib/utm.js';
 import { supabase } from './lib/supabase.js';
 
@@ -29,10 +34,13 @@ export default function App() {
 
   const TOTAL_STEPS = 2;
 
+  // 최초 접속 시 UTM 파라미터 캡처 및 page_open 수집
   useEffect(() => {
     captureUtmParams();
+    trackPageOpen();
   }, []);
 
+  // 모바일 탭 이탈 감지
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && currentStep <= TOTAL_STEPS) {
@@ -44,7 +52,6 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [currentStep]);
 
-  // useCallback 적용으로 무한 루프 차단
   const handleUpdateFormData = useCallback((stepData) => {
     setFormData((prev) => ({
       ...prev,
@@ -85,11 +92,12 @@ export default function App() {
     };
 
     try {
-      const { data, error } = await supabase
-        .from('submissions')
-        .insert([payload]);
+      const { error } = await supabase.from('submissions').insert([payload]);
 
       if (error) throw error;
+
+      // 최종 제출 성공 트래킹
+      trackSubmitSuccess(payload.referral_source);
 
       removeFormData();
       setCurrentStep(3);
@@ -137,9 +145,7 @@ export default function App() {
           />
         )}
 
-        {currentStep === 3 && (
-          <Step3 onReset={handleReset} />
-        )}
+        {currentStep === 3 && <Step3 onReset={handleReset} />}
       </div>
     </main>
   );

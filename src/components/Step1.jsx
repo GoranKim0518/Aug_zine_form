@@ -1,9 +1,21 @@
+// src/components/Step1.jsx
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { trackFieldFocus, trackFieldBlur } from '../lib/analytics.js';
+import ErrorMessage from './ErrorMessage.jsx';
+import {
+  trackFieldFocus,
+  trackFieldBlur,
+  trackStep1Complete,
+  trackValidationError,
+} from '../lib/analytics.js';
 
 export default function Step1({ onNext, onUpdate, defaultValues }) {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       content: defaultValues.content || '',
     },
@@ -16,16 +28,23 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
 
   useEffect(() => {
     onUpdate({ content: contentValue });
-  }, [contentValue]);
+  }, [contentValue, onUpdate]);
 
   const onSubmit = (data) => {
     if (isValidLength) {
+      trackStep1Complete(charCount);
       onNext(data);
     }
   };
 
+  const onError = (formErrors) => {
+    Object.keys(formErrors).forEach((fieldName) => {
+      trackValidationError(fieldName, formErrors[fieldName]?.message, 1);
+    });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4">
       <div className="bg-white rounded-lg border border-gray-200 border-t-8 border-t-purple-600 p-5 sm:p-6 shadow-sm">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">투고 원고 작성</h1>
         <p className="text-sm text-gray-600 leading-relaxed">
@@ -35,11 +54,12 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6 shadow-sm space-y-3">
-        <label className="block text-base font-semibold text-gray-900">
+        <label htmlFor="content-input" className="block text-base font-semibold text-gray-900">
           작품 <span className="text-red-500">*</span>
         </label>
-        
+
         <textarea
+          id="content-input"
           {...register('content', {
             required: '작품 내용을 입력해 주세요.',
             minLength: { value: 500, message: '최소 500자 이상 입력해 주세요.' },
@@ -54,9 +74,7 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
 
         <div className="flex justify-between items-center text-xs sm:text-sm">
           <div>
-            {errors.content && (
-              <span className="text-red-500 font-medium">{errors.content.message}</span>
-            )}
+            <ErrorMessage message={errors.content?.message} />
           </div>
           <div className={`font-semibold ${!isValidLength ? 'text-gray-400' : 'text-purple-600'}`}>
             {charCount} / 1000자 (최소 500자)

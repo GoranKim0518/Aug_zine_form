@@ -1,9 +1,21 @@
+// src/components/Step2.jsx
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { trackFieldFocus, trackFieldBlur } from '../lib/analytics.js';
+import ErrorMessage from './ErrorMessage.jsx';
+import {
+  trackFieldFocus,
+  trackFieldBlur,
+  trackStep2View,
+  trackValidationError,
+} from '../lib/analytics.js';
 
 export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmitting }) {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       pen_name_intro: defaultValues.pen_name_intro || '',
       phone: defaultValues.phone || '',
@@ -16,7 +28,10 @@ export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmi
 
   const selectedReferral = watch('referral_source');
 
-  // 구독 패턴으로 무한 루프 방지
+  useEffect(() => {
+    trackStep2View();
+  }, []);
+
   useEffect(() => {
     const subscription = watch((value) => {
       onUpdate(value);
@@ -28,15 +43,22 @@ export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmi
     await onNext(data);
   };
 
+  const onError = (formErrors) => {
+    Object.keys(formErrors).forEach((fieldName) => {
+      trackValidationError(fieldName, formErrors[fieldName]?.message, 2);
+    });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4">
       {/* 1. 필명 & 한 줄 소개 */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6 shadow-sm space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
+          <label htmlFor="pen-name-intro" className="block text-sm font-semibold text-gray-900 mb-2">
             필명 & 한 줄 소개 <span className="text-red-500">*</span>
           </label>
           <textarea
+            id="pen-name-intro"
             {...register('pen_name_intro', { required: '필명과 한 줄 소개를 입력해 주세요.' })}
             onFocus={() => trackFieldFocus('pen_name_intro', 2)}
             onBlur={(e) => trackFieldBlur('pen_name_intro', 2, !!e.target.value)}
@@ -44,19 +66,18 @@ export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmi
             placeholder="예: 홍길동 / 매일을 기쁨으로 기록하는 에세이스트입니다."
             className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none text-base text-gray-800 transition-all placeholder-gray-400 resize-none"
           />
-          {errors.pen_name_intro && (
-            <p className="text-xs text-red-500 mt-1">{errors.pen_name_intro.message}</p>
-          )}
+          <ErrorMessage message={errors.pen_name_intro?.message} />
         </div>
       </div>
 
       {/* 2. 연락처 정보 */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6 shadow-sm space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
+          <label htmlFor="phone-input" className="block text-sm font-semibold text-gray-900 mb-2">
             전화번호 <span className="text-xs text-gray-500 font-normal">(선택)</span>
           </label>
           <input
+            id="phone-input"
             type="tel"
             inputMode="tel"
             {...register('phone', {
@@ -71,14 +92,15 @@ export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmi
             placeholder="010-0000-0000"
             className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none text-base text-gray-800 transition-all placeholder-gray-400"
           />
-          {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
+          <ErrorMessage message={errors.phone?.message} />
         </div>
 
         <div className="pt-2">
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
+          <label htmlFor="insta-input" className="block text-sm font-semibold text-gray-900 mb-2">
             인스타그램 아이디 <span className="text-xs text-gray-500 font-normal">(선택)</span>
           </label>
           <input
+            id="insta-input"
             {...register('instagram_id')}
             onFocus={() => trackFieldFocus('instagram_id', 2)}
             onBlur={(e) => trackFieldBlur('instagram_id', 2, !!e.target.value)}
@@ -120,15 +142,11 @@ export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmi
               placeholder="기타 경로 입력"
               className="w-full py-1 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none text-base text-gray-800 placeholder-gray-400"
             />
-            {errors.referral_source_other && (
-              <p className="text-xs text-red-500 mt-1">{errors.referral_source_other.message}</p>
-            )}
+            <ErrorMessage message={errors.referral_source_other?.message} />
           </div>
         )}
 
-        {errors.referral_source && (
-          <p className="text-xs text-red-500 mt-1">{errors.referral_source.message}</p>
-        )}
+        <ErrorMessage message={errors.referral_source?.message} />
       </div>
 
       {/* 버튼 영역 */}
