@@ -1,170 +1,129 @@
-// src/components/Step2.jsx
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import ErrorMessage from './ErrorMessage.jsx';
-import {
-  trackFieldFocus,
-  trackFieldBlur,
-  trackStep2View,
-  trackValidationError,
-} from '../lib/analytics.js';
 
-export default function Step2({ onNext, onPrev, onUpdate, defaultValues, isSubmitting }) {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      pen_name_intro: defaultValues.pen_name_intro || '',
-      phone: defaultValues.phone || '',
-      instagram_id: defaultValues.instagram_id || '',
-      referral_source: defaultValues.referral_source || '',
-      referral_source_other: defaultValues.referral_source_other || '',
-    },
-    mode: 'onTouched',
+export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    defaultValues,
   });
 
-  const selectedReferral = watch('referral_source');
+  const selectedSource = watch('source');
 
-  useEffect(() => {
-    trackStep2View();
-  }, []);
-
-  useEffect(() => {
-    const subscription = watch((value) => {
-      onUpdate(value);
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, onUpdate]);
-
-  const onSubmit = async (data) => {
-    await onNext(data);
-  };
-
-  const onError = (formErrors) => {
-    Object.keys(formErrors).forEach((fieldName) => {
-      trackValidationError(fieldName, formErrors[fieldName]?.message, 2);
-    });
+  const onSubmit = (data) => {
+    onNext(data);
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {/* 1. 필명 & 한 줄 소개 */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6 shadow-sm space-y-4">
-        <div>
-          <label htmlFor="pen-name-intro" className="block text-sm font-semibold text-gray-900 mb-2">
-            필명 & 한 줄 소개 <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="pen-name-intro"
-            {...register('pen_name_intro', { required: '필명과 한 줄 소개를 입력해 주세요.' })}
-            onFocus={() => trackFieldFocus('pen_name_intro', 2)}
-            onBlur={(e) => trackFieldBlur('pen_name_intro', 2, !!e.target.value)}
-            rows={3}
-            placeholder="예: 홍길동 / 매일을 기쁨으로 기록하는 에세이스트입니다."
-            className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none text-base text-gray-800 transition-all placeholder-gray-400 resize-none"
-          />
-          <ErrorMessage message={errors.pen_name_intro?.message} />
-        </div>
-      </div>
-
-      {/* 2. 연락처 정보 */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6 shadow-sm space-y-4">
-        <div>
-          <label htmlFor="phone-input" className="block text-sm font-semibold text-gray-900 mb-2">
-            전화번호 <span className="text-xs text-gray-500 font-normal">(선택)</span>
-          </label>
-          <input
-            id="phone-input"
-            type="tel"
-            inputMode="tel"
-            {...register('phone', {
-              validate: (value) => {
-                if (!value) return true;
-                const phoneRegex = /^\d{3}-\d{3,4}-\d{4}$/;
-                return phoneRegex.test(value) || '올바른 전화번호 형식(010-0000-0000)으로 입력해 주세요.';
-              },
-            })}
-            onFocus={() => trackFieldFocus('phone', 2)}
-            onBlur={(e) => trackFieldBlur('phone', 2, !!e.target.value)}
-            placeholder="010-0000-0000"
-            className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none text-base text-gray-800 transition-all placeholder-gray-400"
-          />
-          <ErrorMessage message={errors.phone?.message} />
-        </div>
-
-        <div className="pt-2">
-          <label htmlFor="insta-input" className="block text-sm font-semibold text-gray-900 mb-2">
-            인스타그램 아이디 <span className="text-xs text-gray-500 font-normal">(선택)</span>
-          </label>
-          <input
-            id="insta-input"
-            {...register('instagram_id')}
-            onFocus={() => trackFieldFocus('instagram_id', 2)}
-            onBlur={(e) => trackFieldBlur('instagram_id', 2, !!e.target.value)}
-            placeholder="@username"
-            className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none text-base text-gray-800 transition-all placeholder-gray-400"
-          />
-        </div>
-      </div>
-
-      {/* 3. 알게 된 경로 */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6 shadow-sm space-y-3">
-        <label className="block text-sm font-semibold text-gray-900 mb-1">
-          알게 된 경로 <span className="text-red-500">*</span>
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
+        <label className="block text-base font-medium text-gray-900">
+          필명 & 한 줄 소개 <span className="text-red-500">*</span>
         </label>
+        <textarea
+          {...register('bio', { required: '필명과 한 줄 소개를 입력해 주세요.' })}
+          rows={2}
+          placeholder="내 답변"
+          className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none transition-all text-sm bg-transparent"
+        />
+        {errors.bio && <p className="text-red-500 text-xs">{errors.bio.message}</p>}
+      </div>
 
-        <div className="space-y-3 pt-1">
-          {['지류(매거진)', '인스타그램', '스레드', '당근', '기타'].map((option) => (
-            <label key={option} className="flex items-center space-x-3 cursor-pointer group">
+      {/* 2. 전화번호 */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
+        <label className="block text-base font-medium text-gray-900">
+          전화번호 <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="tel"
+          {...register('phone', {
+            required: '전화번호를 입력해 주세요.',
+            pattern: {
+              value: /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
+              message: '올바른 전화번호 형식이 아닙니다.'
+            }
+          })}
+          placeholder="내 답변"
+          className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none transition-all text-sm bg-transparent"
+        />
+        {errors.phone && <p className="text-red-500 text-xs">{errors.phone.message}</p>}
+      </div>
+
+      {/* 3. 인스타그램 아이디 */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
+        <label className="block text-base font-medium text-gray-900">
+          인스타그램 아이디
+        </label>
+        <input
+          type="text"
+          {...register('instagram')}
+          placeholder="내 답변 (@username)"
+          className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none transition-all text-sm bg-transparent"
+        />
+      </div>
+
+      {/* 4. NO-TE를 알게 된 경로 */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
+        <label className="block text-base font-medium text-gray-900">
+          NO-TE를 알게 된 경로 <span className="text-red-500">*</span>
+        </label>
+        
+        <div className="space-y-3 pt-2">
+          {['지류(매거진)', '인스타그램', '스레드', '당근'].map((option) => (
+            <label key={option} className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="radio"
                 value={option}
-                {...register('referral_source', { required: '알게 된 경로를 선택해 주세요.' })}
-                onClick={() => trackFieldFocus(`referral_${option}`, 2)}
-                className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500 accent-purple-600"
+                {...register('source', { required: '유입 경로를 선택해 주세요.' })}
+                className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
               />
-              <span className="text-sm text-gray-700 group-hover:text-gray-900">{option}</span>
+              <span className="text-sm text-gray-700">{option}</span>
             </label>
           ))}
-        </div>
 
-        {selectedReferral === '기타' && (
-          <div className="pt-2 pl-7">
+          {/* 기타 항목 */}
+          <label className="flex items-center space-x-3 cursor-pointer">
             <input
-              {...register('referral_source_other', {
-                required: selectedReferral === '기타' ? '기타 경로를 직접 입력해 주세요.' : false,
-              })}
-              onFocus={() => trackFieldFocus('referral_source_other', 2)}
-              onBlur={(e) => trackFieldBlur('referral_source_other', 2, !!e.target.value)}
-              placeholder="기타 경로 입력"
-              className="w-full py-1 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none text-base text-gray-800 placeholder-gray-400"
+              type="radio"
+              value="기타"
+              {...register('source', { required: '유입 경로를 선택해 주세요.' })}
+              className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
             />
-            <ErrorMessage message={errors.referral_source_other?.message} />
-          </div>
-        )}
+            <span className="text-sm text-gray-700">기타:</span>
+          </label>
 
-        <ErrorMessage message={errors.referral_source?.message} />
+          {/* 기타 선택 시 동적 표시되는 Text Input */}
+          {selectedSource === '기타' && (
+            <div className="pl-7 pt-1">
+              <input
+                type="text"
+                {...register('sourceCustom', {
+                  required: selectedSource === '기타' ? '기타 사유를 입력해 주세요.' : false
+                })}
+                placeholder="내 답변"
+                className="w-full py-1 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none transition-all text-sm bg-transparent"
+              />
+              {errors.sourceCustom && (
+                <p className="text-red-500 text-xs mt-1">{errors.sourceCustom.message}</p>
+              )}
+            </div>
+          )}
+        </div>
+        {errors.source && <p className="text-red-500 text-xs pt-1">{errors.source.message}</p>}
       </div>
 
-      {/* 버튼 영역 */}
-      <div className="flex justify-between items-center pt-2">
+      {/* 이전 / 제출 버튼 */}
+      <div className="flex justify-between pt-2">
         <button
           type="button"
           onClick={onPrev}
           disabled={isSubmitting}
-          className="px-5 py-2.5 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded transition-colors disabled:opacity-50"
+          className="px-6 py-2.5 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
         >
           이전
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`px-6 py-2.5 bg-purple-600 text-white font-medium text-sm rounded shadow-sm hover:bg-purple-700 transition-colors flex items-center justify-center ${
-            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-          }`}
+          className="px-6 py-2.5 rounded text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition-colors cursor-pointer disabled:bg-purple-300"
         >
           {isSubmitting ? '제출 중...' : '제출'}
         </button>
