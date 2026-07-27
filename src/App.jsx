@@ -57,14 +57,18 @@ export default function App() {
     const finalData = { ...formData, ...step2Data };
 
     try {
+      // 💡 보내주신 스크린샷 DB 컬럼명에 맞춰 1:1 매핑
       const { error } = await supabase.from('submissions').insert([
         {
           content: finalData.content,
-          bio: finalData.bio,
+          pen_name_intro: finalData.bio || finalData.pen_name_intro || '', // 필명 및 소개
           phone: finalData.phone,
-          instagram: finalData.instagram || null,
-          source: finalData.source,
-          source_custom: finalData.source === '기타' ? finalData.sourceCustom : null,
+          instagram_id: finalData.instagram || finalData.instagram_id || null,
+          referral_source: finalData.source || finalData.referral_source || '',
+          referral_source_other:
+            (finalData.source === '기타' || finalData.referral_source === '기타')
+              ? finalData.sourceCustom || finalData.referral_source_other
+              : null,
         },
       ]);
 
