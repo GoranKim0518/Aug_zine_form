@@ -1,25 +1,33 @@
+// src/components/Step1.jsx
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { trackFieldFocus, trackFieldBlur } from '../lib/analytics.js';
 
-export default function Step1({ onNext, defaultValues }) {
+export default function Step1({ onNext, onUpdate, defaultValues }) {
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
     defaultValues: {
-      story: defaultValues.story || '',
+      content: defaultValues.content || '',
     },
-    mode: 'onChange', // 실시간 입력 검증
+    mode: 'onChange',
   });
 
-  const storyValue = watch('story') || '';
-  const charCount = storyValue.length;
+  const contentValue = watch('content') || '';
+  const charCount = contentValue.length;
   const isValidLength = charCount >= 500 && charCount <= 1000;
 
+  // 입력할 때마다 부모(App.jsx) state 및 localStorage에 실시간 자동 저장
+  useEffect(() => {
+    onUpdate({ content: contentValue });
+  }, [contentValue, onUpdate]);
+
   const onSubmit = (data) => {
-    onNext(data);
+    if (isValidLength) {
+      onNext(data);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* 상단 안내문 카드 */}
       <div className="bg-white rounded-lg border border-gray-200 border-t-8 border-t-purple-600 p-5 sm:p-6 shadow-sm">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">투고 원고 작성</h1>
         <p className="text-sm text-gray-600 leading-relaxed">
@@ -28,30 +36,28 @@ export default function Step1({ onNext, defaultValues }) {
         </p>
       </div>
 
-      {/* 장문형 질문 카드 (작품) */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6 shadow-sm space-y-3">
         <label className="block text-base font-semibold text-gray-900">
           작품 <span className="text-red-500">*</span>
         </label>
         
         <textarea
-          {...register('story', {
+          {...register('content', {
             required: '작품 내용을 입력해 주세요.',
             minLength: { value: 500, message: '최소 500자 이상 입력해 주세요.' },
             maxLength: { value: 1000, message: '최대 1000자까지 입력 가능합니다.' },
           })}
-          onFocus={() => trackFieldFocus('story', 1)}
-          onBlur={() => trackFieldBlur('story', 1, charCount > 0)}
+          onFocus={() => trackFieldFocus('content', 1)}
+          onBlur={() => trackFieldBlur('content', 1, charCount > 0)}
           rows={8}
           placeholder="작품 내용을 자유롭게 작성해 주세요."
           className="w-full p-3 text-base text-gray-800 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors resize-y"
         />
 
-        {/* 글자 수 및 에러 메시지 */}
         <div className="flex justify-between items-center text-xs sm:text-sm">
           <div>
-            {errors.story && (
-              <span className="text-red-500 font-medium">{errors.story.message}</span>
+            {errors.content && (
+              <span className="text-red-500 font-medium">{errors.content.message}</span>
             )}
           </div>
           <div className={`font-semibold ${!isValidLength ? 'text-gray-400' : 'text-purple-600'}`}>
@@ -60,7 +66,6 @@ export default function Step1({ onNext, defaultValues }) {
         </div>
       </div>
 
-      {/* 다음 버튼 */}
       <div className="flex justify-end pt-2">
         <button
           type="submit"
