@@ -8,32 +8,33 @@ export default function App() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
 
-  const TOTAL_STEPS = 3;
+  const TOTAL_STEPS = 2; // Step3는 완료 화면이므로 진행바는 2단계 기준
 
   const handleNextStep = (stepData) => {
     setFormData((prev) => ({ ...prev, ...stepData }));
-    setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+    setCurrentStep((prev) => prev + 1);
   };
 
   const handlePrevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleSubmitAll = () => {
-    console.log('최종 제출 데이터:', formData);
-    alert('성공적으로 제출되었습니다!');
+  const handleReset = () => {
+    setFormData({});
+    setCurrentStep(1);
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
-        <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+    <main className="min-h-screen bg-purple-50/50 py-8 px-4 flex justify-center items-start">
+      <div className="w-full max-w-lg space-y-4">
+        {/* 진행 상태 표시바 (Step 1, 2일 때만 표시) */}
+        {currentStep <= TOTAL_STEPS && (
+          <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+        )}
 
+        {/* 단계별 화면 전환 */}
         {currentStep === 1 && (
-          <Step1
-            onNext={handleNextStep}
-            defaultValues={formData}
-          />
+          <Step1 onNext={handleNextStep} defaultValues={formData} />
         )}
 
         {currentStep === 2 && (
@@ -45,11 +46,7 @@ export default function App() {
         )}
 
         {currentStep === 3 && (
-          <Step3
-            formData={formData}
-            onPrev={handlePrevStep}
-            onSubmit={handleSubmitAll}
-          />
+          <Step3 onReset={handleReset} />
         )}
       </div>
     </main>
