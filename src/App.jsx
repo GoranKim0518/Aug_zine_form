@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import ProgressBar from './components/ProgressBar.jsx';
 import Step1 from './components/Step1.jsx';
 import Step2 from './components/Step2.jsx';
 import Step3 from './components/Step3.jsx';
@@ -128,17 +127,8 @@ export default function App() {
   };
 
   return (
-    <main className="min-h-screen bg-purple-50 py-8 px-4 flex justify-center items-start">
-      <div className="w-full max-w-2xl space-y-3">
-        {/* ProgressBar 위치 조정: 
-            독립 카드가 아니라 폼 컴포넌트 바로 위 상단에 미니멀하게 배치하여 
-            전체 스크롤 길이를 줄이고 인지적 부담을 줄임 */}
-        {currentStep <= TOTAL_STEPS && (
-          <div className="px-1 mb-1">
-            <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
-          </div>
-        )}
-
+    <div className="min-h-screen bg-purple-50 text-gray-900 antialiased selection:bg-purple-200">
+      <main className="w-full max-w-2xl mx-auto px-3.5 sm:px-4 py-6 sm:py-8 pb-12">
         {currentStep === 1 && (
           <Step1
             onNext={handleNextStep}
@@ -159,7 +149,7 @@ export default function App() {
         )}
 
         {currentStep === 3 && <Step3 onReset={handleReset} />}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

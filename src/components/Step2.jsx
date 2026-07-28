@@ -32,7 +32,6 @@ export default function Step2({
     mode: 'onChange',
   });
 
-  // 무한 리렌더링 방지: 최초 1회만 reset
   const isInitialized = useRef(false);
   useEffect(() => {
     if (!isInitialized.current && defaultValues && Object.keys(defaultValues).length > 0) {
@@ -67,25 +66,25 @@ export default function Step2({
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-3">
-      <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-3">
-        {/* 구글 폼 섹션 2 안내 카드 (뱃지 제거 및 슬림 패딩 적용) */}
-        <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6 shadow-sm space-y-1.5">
-          <h1 className="text-base text-gray-900 font-normal leading-relaxed">
+    <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5">
+      <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4 sm:space-y-5">
+        {/* 안내 카드 */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-1.5">
+          <h1 className="text-base sm:text-lg text-gray-900 font-semibold leading-relaxed">
             Zine(매거진)과 인스타그램 카드뉴스 제작에 필요한 정보들을 위한 페이지입니다.
           </h1>
-          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+          <p className="text-sm text-gray-600 leading-relaxed">
             Zine·카드뉴스 제작용으로만 활용되며, 배포 완료 후 즉시 폐기됩니다.
           </p>
         </div>
 
         {/* 1. 필명 및 소개 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 shadow-sm space-y-3">
-          <label htmlFor="bio-input" className="block text-base font-normal text-gray-900">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8 shadow-xs space-y-3">
+          <label htmlFor="bio-input" className="block text-base sm:text-lg font-semibold text-gray-900">
             필명 및 한줄소개 <span className="text-red-500">*</span>
           </label>
 
-          <div className="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed">
+          <div className="text-sm text-gray-700 font-medium leading-relaxed">
             글과 함께 게재할 필명을 남겨주세요. 본명과 닉네임 모두 가능합니다.
           </div>  
 
@@ -98,18 +97,18 @@ export default function Step2({
             onFocus={() => trackFieldFocus('bio', 2)}
             onBlur={(e) => trackFieldBlur('bio', 2, e.target.value.length > 0)}
             placeholder="예: 노유캐 / 일상의 순간을 기록합니다."
-            className="w-full p-3 text-sm sm:text-base text-gray-800 bg-white border border-gray-300 rounded focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors"
+            className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-colors"
           />
           <ErrorMessage message={errors.bio?.message} />
         </div>
 
         {/* 2. 전화번호 (선택 항목) */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 shadow-sm space-y-3">
-          <label htmlFor="phone-input" className="block text-base font-normal text-gray-900">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8 shadow-xs space-y-3">
+          <label htmlFor="phone-input" className="block text-base sm:text-lg font-semibold text-gray-900">
             전화번호 <span className="text-gray-500 font-normal">(선택)</span>
           </label>
           
-          <div className="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed">
+          <div className="text-sm text-gray-700 font-medium leading-relaxed">
             투고 결과 안내 및 Zine 수령을 위한 연락처입니다. (접수 후 20일 이내 안내)
           </div>
 
@@ -127,18 +126,18 @@ export default function Step2({
             onFocus={() => trackFieldFocus('phone', 2)}
             onBlur={(e) => trackFieldBlur('phone', 2, e.target.value.length > 0)}
             placeholder="010-1234-5678"
-            className="w-full p-3 text-sm sm:text-base text-gray-800 bg-white border border-gray-300 rounded focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors"
+            className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-colors"
           />
           <ErrorMessage message={errors.phone?.message} />
         </div>
 
         {/* 3. 인스타그램 계정 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 shadow-sm space-y-3">
-          <label htmlFor="instagram-input" className="block text-base font-normal text-gray-900">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8 shadow-xs space-y-3">
+          <label htmlFor="instagram-input" className="block text-base sm:text-lg font-semibold text-gray-900">
             인스타그램 계정 <span className="text-gray-500 font-normal">(선택)</span>
           </label>
 
-          <div className="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed">
+          <div className="text-sm text-gray-700 font-medium leading-relaxed">
             적어주신 분에 한하여, 인스타그램 카드뉴스와 Zine에 필명과 함께 게재됩니다.
           </div>
 
@@ -151,25 +150,25 @@ export default function Step2({
             onFocus={() => trackFieldFocus('instagram', 2)}
             onBlur={(e) => trackFieldBlur('instagram', 2, e.target.value.length > 0)}
             placeholder="@username"
-            className="w-full p-3 text-sm sm:text-base text-gray-800 bg-white border border-gray-300 rounded focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors"
+            className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-colors"
           />
         </div>
 
         {/* 4. 유입 경로 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 shadow-sm space-y-3">
-          <label className="block text-base font-normal text-gray-900">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8 shadow-xs space-y-3">
+          <label className="block text-base sm:text-lg font-semibold text-gray-900">
             유입 경로 <span className="text-red-500">*</span>
           </label>
-          <div className="space-y-2.5 pt-1">
+          <div className="space-y-3 pt-1">
             {['인스타그램', '지인 추천', '에브리타임', '기타'].map((option) => (
-              <label key={option} className="flex items-center space-x-3 cursor-pointer">
+              <label key={option} className="flex items-center space-x-3 cursor-pointer py-1 select-none">
                 <input
                   type="radio"
                   value={option}
                   {...register('source', { required: '알게 된 경로를 선택해 주세요.' })}
-                  className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500 cursor-pointer"
+                  className="w-5 h-5 text-purple-600 border-gray-300 focus:ring-purple-500 cursor-pointer"
                 />
-                <span className="text-gray-800 text-sm sm:text-base">{option}</span>
+                <span className="text-gray-800 text-base">{option}</span>
               </label>
             ))}
           </div>
@@ -183,7 +182,7 @@ export default function Step2({
                   required: selectedSource === '기타' ? '알게 된 경로를 입력해 주세요.' : false,
                 })}
                 placeholder="알게 된 경로를 직접 입력해 주세요."
-                className="w-full p-3 text-sm sm:text-base text-gray-800 bg-white border border-gray-300 rounded focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors"
+                className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-colors"
               />
               <ErrorMessage message={errors.sourceCustom?.message} />
             </div>
@@ -192,25 +191,25 @@ export default function Step2({
 
         {/* 에러 박스 */}
         {submitError && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-medium leading-relaxed">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium leading-relaxed">
             {submitError}
           </div>
         )}
 
         {/* 하단 버튼 */}
-        <div className="flex justify-between items-center pt-2 gap-3">
+        <div className="flex justify-between items-center pt-1 gap-3">
           <button
             type="button"
             onClick={onPrev}
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded font-medium text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50"
+            className="flex-1 sm:flex-none min-h-12 px-6 py-3 rounded-lg font-medium text-base bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50"
           >
             이전
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded font-medium text-sm bg-purple-600 text-white hover:bg-purple-700 transition-colors shadow-sm cursor-pointer disabled:bg-purple-300"
+            className="flex-2 sm:flex-none min-h-12 px-8 py-3 rounded-lg font-medium text-base bg-purple-600 text-white hover:bg-purple-700 active:scale-[0.99] transition-colors shadow-xs cursor-pointer disabled:bg-purple-300"
           >
             {isSubmitting ? '제출 중...' : '최종 제출하기'}
           </button>

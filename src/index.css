@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+html, body {
+  background-color: #f5f3ff; /* bg-purple-50 연보라색 배경 지정 */
+}
