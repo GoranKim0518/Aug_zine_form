@@ -13,10 +13,7 @@ import {
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(1);
-  
-  // LocalStorage 커스텀 훅 적용 (새로고침 시 데이터 유지)
   const [formData, setFormData, removeFormData] = useLocalStorage('submit_form_data', {});
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
@@ -36,7 +33,22 @@ export default function App() {
     }
   }, [currentStep]);
 
-  // 3. 작성 중 페이지 이탈(새로고침/탭 닫기) 방지 경고
+  // 3. SPA 모바일 뒤로가기 제어 (History API)
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (e.state && typeof e.state.step === 'number') {
+        setCurrentStep(e.state.step);
+      } else {
+        // 히스토리 진입점이 없으면 Step 1으로 기본 복구
+        setCurrentStep(1);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // 4. 작성 중 페이지 이탈(새로고침/탭 닫기) 방지 경고
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (Object.keys(formData).length > 0 && currentStep <= TOTAL_STEPS) {
@@ -53,14 +65,24 @@ export default function App() {
     setFormData((prev) => ({ ...prev, ...stepData }));
   };
 
+  // '다음' 버튼 클릭 시 히스토리에 현재 단계 기록 후 이동
   const handleNextStep = (stepData) => {
     setFormData((prev) => ({ ...prev, ...stepData }));
-    setCurrentStep((prev) => prev + 1);
+    const nextStep = currentStep + 1;
+    
+    window.history.pushState({ step: nextStep }, '', '');
+    setCurrentStep(nextStep);
   };
 
+  // '이전' 버튼 클릭 시 (새로고침 여파 안전 보완)
   const handlePrevStep = () => {
     setSubmitError(null);
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
+    if (window.history.state && window.history.state.step) {
+      window.history.back();
+    } else {
+      // 새로고침 등으로 history.state가 날아간 경우 예외 처리
+      setCurrentStep((prev) => Math.max(prev - 1, 1));
+    }
   };
 
   const handleSubmitForm = async (step2Data) => {
@@ -105,6 +127,8 @@ export default function App() {
 
       trackSubmitSuccess(finalData.source || '');
       removeFormData();
+      
+      window.history.pushState({ step: 3 }, '', '');
       setCurrentStep(3);
     } catch (err) {
       clearTimeout(timeoutId);
@@ -123,6 +147,7 @@ export default function App() {
   const handleReset = () => {
     removeFormData();
     setSubmitError(null);
+    window.history.pushState({ step: 1 }, '', '');
     setCurrentStep(1);
   };
 
