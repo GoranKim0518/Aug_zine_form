@@ -6,7 +6,6 @@ import Step2 from './components/Step2.jsx';
 import Step3 from './components/Step3.jsx';
 import { supabase } from './lib/supabase.js';
 
-// .env 환경변수 가져오기
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_ID;
 
 export default function App() {
@@ -16,7 +15,7 @@ export default function App() {
 
   const TOTAL_STEPS = 2;
 
-  // 1. GA4 초기화 및 기본 페이지뷰 전송
+  // 1. GA4 초기화 및 기본 페이지뷰
   useEffect(() => {
     if (GA_MEASUREMENT_ID) {
       ReactGA.initialize(GA_MEASUREMENT_ID);
@@ -27,18 +26,13 @@ export default function App() {
     }
   }, []);
 
-  // 2. 단계 이동 시 GA4 퍼널 이벤트 전송
+  // 2. 단계 이동 시 GA4 퍼널 이벤트 전송 (이벤트 이름 직접 전달)
   useEffect(() => {
     if (GA_MEASUREMENT_ID) {
-      ReactGA.event({
-        category: 'Form_Funnel',
-        action: `view_step_${currentStep}`,
-        label: `Step ${currentStep} View`,
-      });
+      ReactGA.event(`view_step_${currentStep}`);
     }
   }, [currentStep]);
 
-  // 자식 컴포넌트(Step1, Step2)에서 입력값을 실시간 업데이트할 때 사용
   const handleUpdateForm = (stepData) => {
     setFormData((prev) => ({ ...prev, ...stepData }));
   };
@@ -56,30 +50,30 @@ export default function App() {
     setIsSubmitting(true);
     const finalData = { ...formData, ...step2Data };
 
+    // 전화번호 010-XXXX-XXXX 포맷 통일 (하이픈 유무 상관없이 11자리 정리)
+    let formattedPhone = finalData.phone || '';
+    const rawDigits = formattedPhone.replace(/[^0-9]/g, '');
+    if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
+      formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
+    }
+
     try {
-      // 💡 보내주신 스크린샷 DB 컬럼명에 맞춰 1:1 매핑
       const { error } = await supabase.from('submissions').insert([
         {
           content: finalData.content,
-          pen_name_intro: finalData.bio || finalData.pen_name_intro || '', // 필명 및 소개
-          phone: finalData.phone,
-          instagram_id: finalData.instagram || finalData.instagram_id || null,
-          referral_source: finalData.source || finalData.referral_source || '',
-          referral_source_other:
-            (finalData.source === '기타' || finalData.referral_source === '기타')
-              ? finalData.sourceCustom || finalData.referral_source_other
-              : null,
+          pen_name_intro: finalData.bio || '',
+          phone: formattedPhone,
+          instagram_id: finalData.instagram || null,
+          referral_source: finalData.source || '',
+          referral_source_other: finalData.source === '기타' ? finalData.sourceCustom : null,
         },
       ]);
 
       if (error) throw error;
 
-      // 제출 성공 이벤트 전송
+      // 최종 제출 성공 이벤트 전송
       if (GA_MEASUREMENT_ID) {
-        ReactGA.event({
-          category: 'Form_Funnel',
-          action: 'submit_success',
-        });
+        ReactGA.event('submit_success');
       }
 
       setCurrentStep(3);

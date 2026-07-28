@@ -1,8 +1,26 @@
 import { useForm } from 'react-hook-form';
+import ErrorMessage from './ErrorMessage.jsx';
+import {
+  trackFieldFocus,
+  trackFieldBlur,
+  trackValidationError,
+} from '../lib/analytics.js';
 
 export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
-    defaultValues,
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      bio: defaultValues?.bio || '',
+      phone: defaultValues?.phone || '',
+      instagram: defaultValues?.instagram || '',
+      source: defaultValues?.source || '',
+      sourceCustom: defaultValues?.sourceCustom || '',
+    },
+    mode: 'onChange',
   });
 
   const selectedSource = watch('source');
@@ -11,63 +29,87 @@ export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
     onNext(data);
   };
 
+  const onError = (formErrors) => {
+    Object.keys(formErrors).forEach((fieldName) => {
+      trackValidationError(fieldName, formErrors[fieldName]?.message, 2);
+    });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* 1. 필명 & 한 줄 소개 */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
-        <label className="block text-base font-medium text-gray-900">
-          필명 & 한 줄 소개 <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          {...register('bio', { required: '필명과 한 줄 소개를 입력해 주세요.' })}
-          rows={2}
-          placeholder="내 답변"
-          className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none transition-all text-sm bg-transparent"
-        />
-        {errors.bio && <p className="text-red-500 text-xs">{errors.bio.message}</p>}
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4">
+      {/* 안내 카드 */}
+      <div className="bg-white rounded-lg border border-gray-200 border-t-8 border-t-purple-600 p-5 sm:p-6 shadow-sm">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">신청자 정보 입력</h1>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          원고 게재 및 리워드 발송을 위한 인적사항을 입력해 주세요.
+        </p>
       </div>
 
-      {/* 2. 전화번호 */}
+      {/* 1. 필명 및 소개 */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
-        <label className="block text-base font-medium text-gray-900">
+        <label htmlFor="bio-input" className="block text-base font-semibold text-gray-900">
+          필명 및 한 줄 소개 <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="bio-input"
+          type="text"
+          {...register('bio', {
+            required: '필명 및 한 줄 소개를 입력해 주세요.',
+          })}
+          onFocus={() => trackFieldFocus('bio', 2)}
+          onBlur={(e) => trackFieldBlur('bio', 2, e.target.value.length > 0)}
+          placeholder="예: 홍길동 / 일상의 기록을 좋아하는 에세이스트"
+          className="w-full p-3 text-base text-gray-800 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors"
+        />
+        <ErrorMessage message={errors.bio?.message} />
+      </div>
+
+      {/* 2. 전화번호 (UX 최적화: 010으로 시작하는 11자리 번호) */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
+        <label htmlFor="phone-input" className="block text-base font-semibold text-gray-900">
           전화번호 <span className="text-red-500">*</span>
         </label>
         <input
+          id="phone-input"
           type="tel"
           {...register('phone', {
             required: '전화번호를 입력해 주세요.',
             pattern: {
-              value: /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/,
-              message: '올바른 전화번호 형식이 아닙니다.'
-            }
+              value: /^010-?\d{4}-?\d{4}$/,
+              message: '010으로 시작하는 올바른 휴대폰 번호 11자리를 입력해 주세요.',
+            },
           })}
-          placeholder="내 답변"
-          className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none transition-all text-sm bg-transparent"
+          onFocus={() => trackFieldFocus('phone', 2)}
+          onBlur={(e) => trackFieldBlur('phone', 2, e.target.value.length > 0)}
+          placeholder="010-1234-5678 또는 01012345678"
+          className="w-full p-3 text-base text-gray-800 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors"
         />
-        {errors.phone && <p className="text-red-500 text-xs">{errors.phone.message}</p>}
+        <ErrorMessage message={errors.phone?.message} />
       </div>
 
-      {/* 3. 인스타그램 아이디 */}
+      {/* 3. 인스타그램 계정 (선택) */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
-        <label className="block text-base font-medium text-gray-900">
-          인스타그램 아이디
+        <label htmlFor="instagram-input" className="block text-base font-semibold text-gray-900">
+          인스타그램 계정 <span className="text-gray-400 font-normal">(선택)</span>
         </label>
         <input
+          id="instagram-input"
           type="text"
           {...register('instagram')}
-          placeholder="내 답변 (@username)"
-          className="w-full py-2 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none transition-all text-sm bg-transparent"
+          onFocus={() => trackFieldFocus('instagram', 2)}
+          onBlur={(e) => trackFieldBlur('instagram', 2, e.target.value.length > 0)}
+          placeholder="@username"
+          className="w-full p-3 text-base text-gray-800 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors"
         />
       </div>
 
-      {/* 4. NO-TE를 알게 된 경로 */}
+      {/* 4. 유입 경로 */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
-        <label className="block text-base font-medium text-gray-900">
-          NO-TE를 알게 된 경로 <span className="text-red-500">*</span>
+        <label className="block text-base font-semibold text-gray-900">
+          유입 경로 <span className="text-red-500">*</span>
         </label>
-        
-        <div className="space-y-3 pt-2">
-          {['지류(매거진)', '인스타그램', '스레드', '당근'].map((option) => (
+        <div className="space-y-2">
+          {['인스타그램', '지인 추천', '에브리타임', '기타'].map((option) => (
             <label key={option} className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="radio"
@@ -75,57 +117,44 @@ export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
                 {...register('source', { required: '유입 경로를 선택해 주세요.' })}
                 className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
               />
-              <span className="text-sm text-gray-700">{option}</span>
+              <span className="text-gray-700 text-sm">{option}</span>
             </label>
           ))}
-
-          {/* 기타 항목 */}
-          <label className="flex items-center space-x-3 cursor-pointer">
-            <input
-              type="radio"
-              value="기타"
-              {...register('source', { required: '유입 경로를 선택해 주세요.' })}
-              className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
-            />
-            <span className="text-sm text-gray-700">기타:</span>
-          </label>
-
-          {/* 기타 선택 시 동적 표시되는 Text Input */}
-          {selectedSource === '기타' && (
-            <div className="pl-7 pt-1">
-              <input
-                type="text"
-                {...register('sourceCustom', {
-                  required: selectedSource === '기타' ? '기타 사유를 입력해 주세요.' : false
-                })}
-                placeholder="내 답변"
-                className="w-full py-1 border-b border-gray-300 focus:border-b-2 focus:border-purple-600 focus:outline-none transition-all text-sm bg-transparent"
-              />
-              {errors.sourceCustom && (
-                <p className="text-red-500 text-xs mt-1">{errors.sourceCustom.message}</p>
-              )}
-            </div>
-          )}
         </div>
-        {errors.source && <p className="text-red-500 text-xs pt-1">{errors.source.message}</p>}
+        <ErrorMessage message={errors.source?.message} />
+
+        {/* 기타 선택 시 주관식 입력창 */}
+        {selectedSource === '기타' && (
+          <div className="pt-2">
+            <input
+              type="text"
+              {...register('sourceCustom', {
+                required: selectedSource === '기타' ? '기타 유입 경로를 입력해 주세요.' : false,
+              })}
+              placeholder="유입 경로를 직접 입력해 주세요."
+              className="w-full p-3 text-base text-gray-800 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors"
+            />
+            <ErrorMessage message={errors.sourceCustom?.message} />
+          </div>
+        )}
       </div>
 
-      {/* 이전 / 제출 버튼 */}
-      <div className="flex justify-between pt-2">
+      {/* 하단 버튼 영역 */}
+      <div className="flex justify-between items-center pt-2 gap-3">
         <button
           type="button"
           onClick={onPrev}
           disabled={isSubmitting}
-          className="px-6 py-2.5 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+          className="px-5 py-3 rounded font-medium text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
         >
-          이전
+          이전 단계
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-6 py-2.5 rounded text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition-colors cursor-pointer disabled:bg-purple-300"
+          className="flex-1 sm:flex-none px-6 py-3 rounded font-medium text-sm bg-purple-600 text-white hover:bg-purple-700 transition-colors shadow-sm cursor-pointer disabled:bg-purple-300"
         >
-          {isSubmitting ? '제출 중...' : '제출'}
+          {isSubmitting ? '제출 중...' : '최종 제출하기'}
         </button>
       </div>
     </form>

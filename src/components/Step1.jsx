@@ -1,4 +1,3 @@
-// src/components/Step1.jsx
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import ErrorMessage from './ErrorMessage.jsx';
@@ -17,7 +16,7 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      content: defaultValues.content || '',
+      content: defaultValues?.content || '',
     },
     mode: 'onChange',
   });
@@ -27,7 +26,9 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
   const isValidLength = charCount >= 500 && charCount <= 1000;
 
   useEffect(() => {
-    onUpdate({ content: contentValue });
+    if (typeof onUpdate === 'function') {
+      onUpdate({ content: contentValue });
+    }
   }, [contentValue, onUpdate]);
 
   const onSubmit = (data) => {

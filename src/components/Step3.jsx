@@ -13,7 +13,7 @@ export default function Step3({ onReset }) {
           <button
             type="button"
             onClick={onReset}
-            className="text-sm text-purple-600 underline font-medium hover:text-purple-800 transition-colors"
+            className="text-sm text-purple-600 underline font-medium hover:text-purple-800 transition-colors cursor-pointer"
           >
             다른 응답 제출하기
           </button>
