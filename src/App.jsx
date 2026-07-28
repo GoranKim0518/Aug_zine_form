@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import ReactGA from 'react-ga4';
 import ProgressBar from './components/ProgressBar.jsx';
 import Step1 from './components/Step1.jsx';
 import Step2 from './components/Step2.jsx';
 import Step3 from './components/Step3.jsx';
 import { supabase } from './lib/supabase.js';
-
-const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_ID;
+import {
+  trackPageOpen,
+  trackStep1View,
+  trackStep2View,
+  trackSubmitSuccess,
+} from './lib/analytics.js';
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -15,21 +18,17 @@ export default function App() {
 
   const TOTAL_STEPS = 2;
 
-  // 1. GA4 초기화 및 기본 페이지뷰
+  // 1. 최초 접속 트래킹
   useEffect(() => {
-    if (GA_MEASUREMENT_ID) {
-      ReactGA.initialize(GA_MEASUREMENT_ID);
-      ReactGA.send({ 
-        hitType: "pageview", 
-        page: window.location.pathname + window.location.search 
-      });
-    }
+    trackPageOpen();
   }, []);
 
-  // 2. 단계 이동 시 GA4 퍼널 이벤트 전송 (이벤트 이름 직접 전달)
+  // 2. 단계 이동 시 GTM DataLayer 이벤트 전송
   useEffect(() => {
-    if (GA_MEASUREMENT_ID) {
-      ReactGA.event(`view_step_${currentStep}`);
+    if (currentStep === 1) {
+      trackStep1View();
+    } else if (currentStep === 2) {
+      trackStep2View();
     }
   }, [currentStep]);
 
@@ -50,7 +49,7 @@ export default function App() {
     setIsSubmitting(true);
     const finalData = { ...formData, ...step2Data };
 
-    // 전화번호 010-XXXX-XXXX 포맷 통일 (하이픈 유무 상관없이 11자리 정리)
+    // 전화번호 010-XXXX-XXXX 포맷 통일 (11자리)
     let formattedPhone = finalData.phone || '';
     const rawDigits = formattedPhone.replace(/[^0-9]/g, '');
     if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
@@ -71,10 +70,8 @@ export default function App() {
 
       if (error) throw error;
 
-      // 최종 제출 성공 이벤트 전송
-      if (GA_MEASUREMENT_ID) {
-        ReactGA.event('submit_success');
-      }
+      // 최종 제출 성공 트래킹 (유입경로 함께 전송)
+      trackSubmitSuccess(finalData.source || '');
 
       setCurrentStep(3);
     } catch (err) {
