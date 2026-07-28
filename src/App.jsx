@@ -14,21 +14,16 @@ import {
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(1);
-  
-  // LocalStorage 커스텀 훅 적용 (새로고침 시 데이터 유지)
   const [formData, setFormData, removeFormData] = useLocalStorage('submit_form_data', {});
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
   const TOTAL_STEPS = 2;
 
-  // 1. 최초 접속 트래킹
   useEffect(() => {
     trackPageOpen();
   }, []);
 
-  // 2. 단계 이동 시 GTM DataLayer 이벤트 전송
   useEffect(() => {
     if (currentStep === 1) {
       trackStep1View();
@@ -37,7 +32,6 @@ export default function App() {
     }
   }, [currentStep]);
 
-  // 3. 작성 중 페이지 이탈(새로고침/탭 닫기) 방지 경고
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (Object.keys(formData).length > 0 && currentStep <= TOTAL_STEPS) {
@@ -128,17 +122,14 @@ export default function App() {
   };
 
   return (
-    <main className="min-h-screen bg-purple-50 py-8 px-4 flex justify-center items-start">
-      <div className="w-full max-w-2xl space-y-3">
-        {/* ProgressBar 위치 조정: 
-            독립 카드가 아니라 폼 컴포넌트 바로 위 상단에 미니멀하게 배치하여 
-            전체 스크롤 길이를 줄이고 인지적 부담을 줄임 */}
-        {currentStep <= TOTAL_STEPS && (
-          <div className="px-1 mb-1">
-            <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
-          </div>
-        )}
+    <main className="min-h-screen bg-white text-gray-900 antialiased selection:bg-purple-100">
+      {/* Sticky 프로그레스 바 */}
+      {currentStep <= TOTAL_STEPS && (
+        <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+      )}
 
+      {/* 모바일 화면 전체 너비 활용: px-4 (16px), py-6 (아이폰 13 해상도 기준 여백 비율) */}
+      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-12 pb-16">
         {currentStep === 1 && (
           <Step1
             onNext={handleNextStep}
