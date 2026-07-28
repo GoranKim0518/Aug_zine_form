@@ -13,6 +13,7 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -20,6 +21,13 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
     },
     mode: 'onChange',
   });
+
+  // LocalStorage 등 외부에서 defaultValues가 동적으로 로드될 때 폼 값 동기화
+  useEffect(() => {
+    if (defaultValues?.content) {
+      reset({ content: defaultValues.content });
+    }
+  }, [defaultValues?.content, reset]);
 
   const contentValue = watch('content') || '';
   const charCount = contentValue.length;

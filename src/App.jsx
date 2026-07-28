@@ -4,6 +4,7 @@ import Step1 from './components/Step1.jsx';
 import Step2 from './components/Step2.jsx';
 import Step3 from './components/Step3.jsx';
 import { supabase } from './lib/supabase.js';
+import { useLocalStorage } from './hooks/useLocalStorage.js';
 import {
   trackPageOpen,
   trackStep1View,
@@ -13,8 +14,12 @@ import {
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({});
+  
+  // LocalStorage 커스텀 훅 적용 (새로고침 시 데이터 유지)
+  const [formData, setFormData, removeFormData] = useLocalStorage('submit_form_data', {});
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const TOTAL_STEPS = 2;
 
@@ -32,6 +37,20 @@ export default function App() {
     }
   }, [currentStep]);
 
+  // 3. 작성 중 페이지 이탈(새로고침/탭 닫기) 방지 경고
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      // 작성된 데이터가 존재하고, 아직 완료(Step 3) 단계가 아닐 때 동작
+      if (Object.keys(formData).length > 0 && currentStep <= TOTAL_STEPS) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, currentStep]);
+
   const handleUpdateForm = (stepData) => {
     setFormData((prev) => ({ ...prev, ...stepData }));
   };
@@ -42,11 +61,21 @@ export default function App() {
   };
 
   const handlePrevStep = () => {
+    setSubmitError(null);
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleSubmitForm = async (step2Data) => {
     setIsSubmitting(true);
+    setSubmitError(null);
+
+    // 오프라인 상태 사전 체크
+    if (!navigator.onLine) {
+      setSubmitError('인터넷 연결이 끊겨 있습니다. 네트워크 상태를 확인해 주세요.');
+      setIsSubmitting(false);
+      return;
+    }
+
     const finalData = { ...formData, ...step2Data };
 
     // 전화번호 010-XXXX-XXXX 포맷 통일 (11자리)
@@ -56,34 +85,53 @@ export default function App() {
       formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
     }
 
+    // 10초 타임아웃 설정 (네트워크 무한 대기 방지)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
-      const { error } = await supabase.from('submissions').insert([
-        {
-          content: finalData.content,
-          pen_name_intro: finalData.bio || '',
-          phone: formattedPhone,
-          instagram_id: finalData.instagram || null,
-          referral_source: finalData.source || '',
-          referral_source_other: finalData.source === '기타' ? finalData.sourceCustom : null,
-        },
-      ]);
+      const { error } = await supabase
+        .from('submissions')
+        .insert([
+          {
+            content: finalData.content,
+            pen_name_intro: finalData.bio || '',
+            phone: formattedPhone,
+            instagram_id: finalData.instagram || null,
+            referral_source: finalData.source || '',
+            referral_source_other: finalData.source === '기타' ? finalData.sourceCustom : null,
+          },
+        ])
+        .abortSignal(controller.signal);
+
+      clearTimeout(timeoutId);
 
       if (error) throw error;
 
       // 최종 제출 성공 트래킹 (유입경로 함께 전송)
       trackSubmitSuccess(finalData.source || '');
 
+      // 제출 완료 시 저장되었던 로컬스토리지 데이터 삭제
+      removeFormData();
+
       setCurrentStep(3);
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('제출 실패:', err);
-      alert('제출 중 오류가 발생했습니다. 다시 시도해 주세요.');
+
+      if (err.name === 'AbortError') {
+        setSubmitError('요청 시간이 초과되었습니다. 네트워크 상태를 확인 후 다시 시도해 주세요.');
+      } else {
+        setSubmitError('제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleReset = () => {
-    setFormData({});
+    removeFormData();
+    setSubmitError(null);
     setCurrentStep(1);
   };
 
@@ -109,6 +157,7 @@ export default function App() {
             onUpdate={handleUpdateForm}
             defaultValues={formData}
             isSubmitting={isSubmitting}
+            submitError={submitError}
           />
         )}
 

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import ErrorMessage from './ErrorMessage.jsx';
 import {
@@ -6,11 +7,19 @@ import {
   trackValidationError,
 } from '../lib/analytics.js';
 
-export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
+export default function Step2({
+  onNext,
+  onPrev,
+  onUpdate,
+  defaultValues,
+  isSubmitting,
+  submitError,
+}) {
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -23,7 +32,28 @@ export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
     mode: 'onChange',
   });
 
-  const selectedSource = watch('source');
+  // LocalStorage 데이터 로드 시 폼 입력값 동기화
+  useEffect(() => {
+    if (defaultValues && Object.keys(defaultValues).length > 0) {
+      reset({
+        bio: defaultValues.bio || '',
+        phone: defaultValues.phone || '',
+        instagram: defaultValues.instagram || '',
+        source: defaultValues.source || '',
+        sourceCustom: defaultValues.sourceCustom || '',
+      });
+    }
+  }, [defaultValues, reset]);
+
+  const formValues = watch();
+  const selectedSource = formValues.source;
+
+  // 실시간 입력 내용 상위(App.jsx -> LocalStorage)로 전달
+  useEffect(() => {
+    if (typeof onUpdate === 'function') {
+      onUpdate(formValues);
+    }
+  }, [formValues, onUpdate]);
 
   const onSubmit = (data) => {
     onNext(data);
@@ -64,7 +94,7 @@ export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
         <ErrorMessage message={errors.bio?.message} />
       </div>
 
-      {/* 2. 전화번호 (UX 최적화: 010으로 시작하는 11자리 번호) */}
+      {/* 2. 전화번호 (모바일 키패드 UX 최적화: inputMode="numeric") */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
         <label htmlFor="phone-input" className="block text-base font-semibold text-gray-900">
           전화번호 <span className="text-red-500">*</span>
@@ -72,6 +102,7 @@ export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
         <input
           id="phone-input"
           type="tel"
+          inputMode="numeric"
           {...register('phone', {
             required: '전화번호를 입력해 주세요.',
             pattern: {
@@ -87,7 +118,7 @@ export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
         <ErrorMessage message={errors.phone?.message} />
       </div>
 
-      {/* 3. 인스타그램 계정 (선택) */}
+      {/* 3. 인스타그램 계정 (자동 대문자 변환 방지: autoCapitalize="none") */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm space-y-3">
         <label htmlFor="instagram-input" className="block text-base font-semibold text-gray-900">
           인스타그램 계정 <span className="text-gray-400 font-normal">(선택)</span>
@@ -95,6 +126,8 @@ export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
         <input
           id="instagram-input"
           type="text"
+          autoCapitalize="none"
+          autoCorrect="off"
           {...register('instagram')}
           onFocus={() => trackFieldFocus('instagram', 2)}
           onBlur={(e) => trackFieldBlur('instagram', 2, e.target.value.length > 0)}
@@ -139,13 +172,20 @@ export default function Step2({ onNext, onPrev, defaultValues, isSubmitting }) {
         )}
       </div>
 
+      {/* 네트워크 / 제출 에러 안내 박스 */}
+      {submitError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-medium leading-relaxed">
+          {submitError}
+        </div>
+      )}
+
       {/* 하단 버튼 영역 */}
       <div className="flex justify-between items-center pt-2 gap-3">
         <button
           type="button"
           onClick={onPrev}
           disabled={isSubmitting}
-          className="px-5 py-3 rounded font-medium text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+          className="px-5 py-3 rounded font-medium text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50"
         >
           이전 단계
         </button>
