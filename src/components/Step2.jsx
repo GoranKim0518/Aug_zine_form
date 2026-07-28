@@ -20,6 +20,7 @@ export default function Step2({
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -54,6 +55,18 @@ export default function Step2({
       onUpdate(formValues);
     }
   }, [formValues]);
+
+  // 전화번호 문자열 정제 함수 (+82, 공백, 하이픈 제거 후 표준 010-XXXX-XXXX 포맷 변환)
+  const formatPhoneNumber = (value) => {
+    if (!value) return '';
+    // +82 10-1234-5678 과 같이 들어오는 아이폰 오토필 대응
+    let clean = value.replace(/^\+82\s?/, '0').replace(/[^0-9]/g, '');
+    
+    if (clean.length === 11 && clean.startsWith('010')) {
+      return `${clean.slice(0, 3)}-${clean.slice(3, 7)}-${clean.slice(7)}`;
+    }
+    return value; // 11자리가 채워지지 않은 상태면 사용자 입력값 유지
+  };
 
   const onSubmit = (data) => {
     onNext(data);
@@ -102,7 +115,7 @@ export default function Step2({
           <ErrorMessage message={errors.bio?.message} />
         </div>
 
-        {/* 2. 전화번호 (선택 항목) */}
+        {/* 2. 전화번호 (선택 항목) - 아이폰 키패드 오토필 대응 */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8 shadow-xs space-y-3">
           <label htmlFor="phone-input" className="block text-base sm:text-lg font-semibold text-gray-900">
             전화번호 <span className="text-gray-500 font-normal">(선택)</span>
@@ -115,11 +128,19 @@ export default function Step2({
           <input
             id="phone-input"
             type="tel"
+            autoComplete="tel"
             inputMode="numeric"
             {...register('phone', {
+              onChange: (e) => {
+                // 아이폰 자동완성 클릭 시 010-XXXX-XXXX 표준 포맷으로 즉시 변환
+                const formatted = formatPhoneNumber(e.target.value);
+                setValue('phone', formatted, { shouldValidate: true });
+              },
               validate: (val) => {
                 if (!val) return true;
-                const isValid = /^010-?\d{4}-?\d{4}$/.test(val);
+                // 국가번호(+82)나 공백, 하이픈이 섞여 들어와도 순수 숫자 자릿수로만 판별
+                const rawDigits = val.replace(/^\+82\s?/, '0').replace(/[^0-9]/g, '');
+                const isValid = rawDigits.length === 11 && rawDigits.startsWith('010');
                 return isValid || '010으로 시작하는 전화번호 11자리를 입력해 주세요.';
               },
             })}
