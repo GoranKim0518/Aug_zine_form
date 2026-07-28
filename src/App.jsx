@@ -40,7 +40,6 @@ export default function App() {
   // 3. 작성 중 페이지 이탈(새로고침/탭 닫기) 방지 경고
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      // 작성된 데이터가 존재하고, 아직 완료(Step 3) 단계가 아닐 때 동작
       if (Object.keys(formData).length > 0 && currentStep <= TOTAL_STEPS) {
         e.preventDefault();
         e.returnValue = '';
@@ -69,7 +68,6 @@ export default function App() {
     setIsSubmitting(true);
     setSubmitError(null);
 
-    // 오프라인 상태 사전 체크
     if (!navigator.onLine) {
       setSubmitError('인터넷 연결이 끊겨 있습니다. 네트워크 상태를 확인해 주세요.');
       setIsSubmitting(false);
@@ -78,14 +76,12 @@ export default function App() {
 
     const finalData = { ...formData, ...step2Data };
 
-    // 전화번호 010-XXXX-XXXX 포맷 통일 (11자리)
     let formattedPhone = finalData.phone || '';
     const rawDigits = formattedPhone.replace(/[^0-9]/g, '');
     if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
       formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
     }
 
-    // 10초 타임아웃 설정 (네트워크 무한 대기 방지)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -108,12 +104,8 @@ export default function App() {
 
       if (error) throw error;
 
-      // 최종 제출 성공 트래킹 (유입경로 함께 전송)
       trackSubmitSuccess(finalData.source || '');
-
-      // 제출 완료 시 저장되었던 로컬스토리지 데이터 삭제
       removeFormData();
-
       setCurrentStep(3);
     } catch (err) {
       clearTimeout(timeoutId);
@@ -137,9 +129,14 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-purple-50 py-8 px-4 flex justify-center items-start">
-      <div className="w-full max-w-xl space-y-4">
+      <div className="w-full max-w-2xl space-y-3">
+        {/* ProgressBar 위치 조정: 
+            독립 카드가 아니라 폼 컴포넌트 바로 위 상단에 미니멀하게 배치하여 
+            전체 스크롤 길이를 줄이고 인지적 부담을 줄임 */}
         {currentStep <= TOTAL_STEPS && (
-          <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+          <div className="px-1 mb-1">
+            <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+          </div>
         )}
 
         {currentStep === 1 && (
