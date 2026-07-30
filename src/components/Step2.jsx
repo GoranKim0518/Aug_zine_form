@@ -72,7 +72,7 @@ export default function Step2({
         {/* 구글 폼 섹션 2 안내 카드 */}
         <div className="space-y-1 border-b border-gray-200/80 pb-4">
           <h1 className="text-base sm:text-lg text-gray-900 font-bold leading-relaxed">
-            Zine(매거진)과 인스타그램 카드뉴스 제작에 필요한 정보들을 위한 페이지입니다.
+            매거진과 인스타그램 카드뉴스 제작을 위한 정보 입력 페이지입니다.
           </h1>
           <p className="text-sm text-gray-600 leading-relaxed">
             Zine·카드뉴스 제작용으로만 활용되며, 배포 완료 후 즉시 폐기됩니다.

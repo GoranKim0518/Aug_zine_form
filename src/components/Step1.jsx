@@ -62,7 +62,7 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
           
           {/* 1. 메인 타이틀: 굵기와 구분선으로 본문과 명확히 구별 */}
           <div className="border-b border-gray-200/80 pb-5">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 leading-snug">
+            <h1 className="text-4xl sm:text-4xl font-bold tracking-tight text-gray-900 leading-snug">
               NO-TE 8월 키워드 &lt;온도&gt; 투고하기
             </h1>
           </div>
