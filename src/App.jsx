@@ -1,15 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Step1 from './components/Step1.jsx';
 import Step2 from './components/Step2.jsx';
 import Step3 from './components/Step3.jsx';
 import { supabase } from './lib/supabase.js';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
+import ProgressBar from './components/ProgressBar.jsx';
 import {
   trackPageOpen,
   trackStep1View,
   trackStep2View,
   trackSubmitSuccess,
 } from './lib/analytics.js';
+import ascii from './ascii.txt?raw';
+
+console.log(`%c${ascii}`,
+  'font-family: monospace; line-height: 1.0; font-size: 11px;');
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -19,12 +24,10 @@ export default function App() {
 
   const TOTAL_STEPS = 2;
 
-  // 1. 최초 접속 트래킹
   useEffect(() => {
     trackPageOpen();
   }, []);
 
-  // 2. 단계 이동 시 GTM DataLayer 이벤트 전송
   useEffect(() => {
     if (currentStep === 1) {
       trackStep1View();
@@ -33,22 +36,6 @@ export default function App() {
     }
   }, [currentStep]);
 
-  // 3. SPA 모바일 뒤로가기 제어 (History API)
-  useEffect(() => {
-    const handlePopState = (e) => {
-      if (e.state && typeof e.state.step === 'number') {
-        setCurrentStep(e.state.step);
-      } else {
-        // 히스토리 진입점이 없으면 Step 1으로 기본 복구
-        setCurrentStep(1);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // 4. 작성 중 페이지 이탈(새로고침/탭 닫기) 방지 경고
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (Object.keys(formData).length > 0 && currentStep <= TOTAL_STEPS) {
@@ -61,29 +48,28 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [formData, currentStep]);
 
-  const handleUpdateForm = (stepData) => {
+  // useCallback으로 참조를 고정하여 자식 컴포넌트의 useEffect 재실행 방지
+  const handleUpdateForm = useCallback((stepData) => {
     setFormData((prev) => ({ ...prev, ...stepData }));
-  };
+  }, [setFormData]);
 
-  // '다음' 버튼 클릭 시 히스토리에 현재 단계 기록 후 이동
-  const handleNextStep = (stepData) => {
+  const handleNextStep = useCallback((stepData) => {
     setFormData((prev) => ({ ...prev, ...stepData }));
-    const nextStep = currentStep + 1;
-    
-    window.history.pushState({ step: nextStep }, '', '');
-    setCurrentStep(nextStep);
-  };
+    setCurrentStep((prev) => {
+      const nextStep = prev + 1;
+      window.history.pushState({ step: nextStep }, '', '');
+      return nextStep;
+    });
+  }, [setFormData]);
 
-  // '이전' 버튼 클릭 시 (새로고침 여파 안전 보완)
-  const handlePrevStep = () => {
+  const handlePrevStep = useCallback(() => {
     setSubmitError(null);
     if (window.history.state && window.history.state.step) {
       window.history.back();
     } else {
-      // 새로고침 등으로 history.state가 날아간 경우 예외 처리
       setCurrentStep((prev) => Math.max(prev - 1, 1));
     }
-  };
+  }, []);
 
   const handleSubmitForm = async (step2Data) => {
     setIsSubmitting(true);
@@ -144,16 +130,20 @@ export default function App() {
     }
   };
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     removeFormData();
     setSubmitError(null);
     window.history.pushState({ step: 1 }, '', '');
     setCurrentStep(1);
-  };
+  }, [removeFormData]);
 
   return (
-    <div className="min-h-screen bg-purple-50 text-gray-900 antialiased selection:bg-purple-200">
-      <main className="w-full max-w-2xl mx-auto px-3.5 sm:px-4 py-6 sm:py-8 pb-12">
+    <main className="min-h-screen bg-white text-gray-900 antialiased selection:bg-purple-100">
+      {currentStep <= TOTAL_STEPS && (
+        <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+      )}
+
+      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-12 pb-16">
         {currentStep === 1 && (
           <Step1
             onNext={handleNextStep}
@@ -174,7 +164,7 @@ export default function App() {
         )}
 
         {currentStep === 3 && <Step3 onReset={handleReset} />}
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
