@@ -36,6 +36,20 @@ export default function App() {
     }
   }, [currentStep]);
 
+  // 뒤로가기(popstate) 이벤트 수신 등록 (브라우저 뒤로가기 버튼 연동)
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (e.state && typeof e.state.step === 'number') {
+        setCurrentStep(e.state.step);
+      } else {
+        setCurrentStep(1);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (Object.keys(formData).length > 0 && currentStep <= TOTAL_STEPS) {
@@ -48,7 +62,6 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [formData, currentStep]);
 
-  // useCallback으로 참조를 고정하여 자식 컴포넌트의 useEffect 재실행 방지
   const handleUpdateForm = useCallback((stepData) => {
     setFormData((prev) => ({ ...prev, ...stepData }));
   }, [setFormData]);
@@ -62,13 +75,14 @@ export default function App() {
     });
   }, [setFormData]);
 
+  // 이전 버튼 클릭 시 history.back() 비동기 딜레이 없이 UI 즉시 갱신
   const handlePrevStep = useCallback(() => {
     setSubmitError(null);
-    if (window.history.state && window.history.state.step) {
-      window.history.back();
-    } else {
-      setCurrentStep((prev) => Math.max(prev - 1, 1));
-    }
+    setCurrentStep((prev) => {
+      const prevStep = Math.max(prev - 1, 1);
+      window.history.pushState({ step: prevStep }, '', '');
+      return prevStep;
+    });
   }, []);
 
   const handleSubmitForm = async (step2Data) => {
