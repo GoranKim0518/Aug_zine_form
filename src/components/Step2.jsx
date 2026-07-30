@@ -48,7 +48,7 @@ export default function Step2({
 
   const formValues = watch();
   const selectedSource = formValues.source;
-  const LENGTH = 100;
+  const INPUT_LENGT = 100;
 
   useEffect(() => {
     if (typeof onUpdate === 'function') {
@@ -95,7 +95,7 @@ export default function Step2({
             {...register('bio', {
               required: '필명 및 한줄소개를 입력해 주세요.',
             })}
-            maxLength={LENGTH}
+            maxLength={INPUT_LENGT}
             onFocus={() => trackFieldFocus('bio', 2)}
             onBlur={(e) => trackFieldBlur('bio', 2, e.target.value.length > 0)}
             placeholder="예: 노유캐 / 일상의 순간을 기록합니다."
@@ -147,7 +147,7 @@ export default function Step2({
           <input
             id="instagram-input"
             type="text"
-            maxLength={LENGTH}
+            maxLength={INPUT_LENGT}
             autoCapitalize="none"
             autoCorrect="off"
             {...register('instagram')}
@@ -193,7 +193,7 @@ export default function Step2({
             <div className="pt-1">
               <input
                 type="text"
-                maxLength={LENGTH}
+                maxLength={INPUT_LENGT}
                 {...register('sourceCustom', {
                   required: selectedSource === '기타' ? '알게 된 경로를 입력해 주세요.' : false,
                 })}
