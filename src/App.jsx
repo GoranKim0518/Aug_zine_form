@@ -11,6 +11,10 @@ import {
   trackStep2View,
   trackSubmitSuccess,
 } from './lib/analytics.js';
+import ascii from './ascii.txt?raw';
+
+console.log(`%c${ascii}`,
+  'font-family: monospace; line-height: 1.0; font-size: 11px;');
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(1);

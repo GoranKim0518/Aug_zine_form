@@ -48,6 +48,7 @@ export default function Step2({
 
   const formValues = watch();
   const selectedSource = formValues.source;
+  const LENGTH = 100;
 
   useEffect(() => {
     if (typeof onUpdate === 'function') {
@@ -94,6 +95,7 @@ export default function Step2({
             {...register('bio', {
               required: '필명 및 한줄소개를 입력해 주세요.',
             })}
+            maxLength={LENGTH}
             onFocus={() => trackFieldFocus('bio', 2)}
             onBlur={(e) => trackFieldBlur('bio', 2, e.target.value.length > 0)}
             placeholder="예: 노유캐 / 일상의 순간을 기록합니다."
@@ -115,6 +117,7 @@ export default function Step2({
           <input
             id="phone-input"
             type="tel"
+            maxLength="11"
             inputMode="numeric"
             {...register('phone', {
               validate: (val) => {
@@ -125,7 +128,7 @@ export default function Step2({
             })}
             onFocus={() => trackFieldFocus('phone', 2)}
             onBlur={(e) => trackFieldBlur('phone', 2, e.target.value.length > 0)}
-            placeholder="010-1234-5678"
+            placeholder="01012345678"
             className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all shadow-xs"
           />
           <ErrorMessage message={errors.phone?.message} />
@@ -144,6 +147,7 @@ export default function Step2({
           <input
             id="instagram-input"
             type="text"
+            maxLength={LENGTH}
             autoCapitalize="none"
             autoCorrect="off"
             {...register('instagram')}
@@ -189,6 +193,7 @@ export default function Step2({
             <div className="pt-1">
               <input
                 type="text"
+                maxLength={LENGTH}
                 {...register('sourceCustom', {
                   required: selectedSource === '기타' ? '알게 된 경로를 입력해 주세요.' : false,
                 })}
