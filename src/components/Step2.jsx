@@ -132,12 +132,13 @@ export default function Step2({
             {...register('phone', {
               validate: (val) => {
                 if (!val) return true;
-                // 국가번호(+82)나 공백이 섞여 들어와도 순수 숫자 자릿수로만 판별
-                const rawDigits = val.replace(/^\+82\s?/, '0').replace(/[^0-9]/g, '');
-                const isValid = rawDigits.length === 11 && rawDigits.startsWith('010');
-                return isValid || '010으로 시작하는 전화번호 11자리를 입력해 주세요.';
+                return (val.length === 11 && val.startsWith('010')) || '010으로 시작하는 전화번호 11자리를 입력해 주세요.';
               },
             })}
+            onInput={(e) => {
+              // 키보드/붙여넣기 상관없이 숫자가 아닌 문자 즉시 삭제
+              e.target.value = e.target.value.replace(/\D/g, '');
+            }}
             onFocus={() => trackFieldFocus('phone', 2)}
             onBlur={(e) => trackFieldBlur('phone', 2, e.target.value.length > 0)}
             placeholder="01012345678"
@@ -207,9 +208,9 @@ export default function Step2({
                 type="text"
                 maxLength={INPUT_LENGTH}
                 {...register('sourceCustom', {
-                  required: selectedSource === '기타' ? '알게 된 경로를 입력해 주세요.' : false,
+                  required: selectedSource === '기타' ? '알게 된 경로를 선택해 주세요.' : false,
                 })}
-                placeholder="알게 된 경로를 직접 입력해 주세요."
+                placeholder="알게 된 경로를 입력해 주세요."
                 className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all shadow-xs"
               />
               <ErrorMessage message={errors.sourceCustom?.message} />

@@ -13,7 +13,7 @@ export default function Step3({ onReset }) {
 
           <p>
             글과 어울리는 사진·이미지가 있다면 <strong>필명과 함께</strong> 아래 메일로 보내주세요.<br />
-            카드뉴스와 Zine 제작에 활용됩니다.
+            카드뉴스와 Zine 디자인에 활용됩니다.
           </p>
 
           <p className="text-purple-700 font-semibold text-base">

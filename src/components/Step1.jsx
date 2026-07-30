@@ -102,7 +102,7 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
             <div className="p-4 sm:p-5 bg-gray-50/90 border border-gray-200/70 rounded-2xl space-y-3 mt-2">
               <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-gray-800 font-medium leading-relaxed">
                 <li>모집 기간: 8월 1일(토) ~ 8월 31일(월)</li>
-                <li>활동 범위가 노원이라면, 누구나 참여 가능</li>
+                <li>활동 범위가 노원이라면 누구나 참여 가능</li>
                 <li>선정작은 카드뉴스 및 Zine에 수록</li>
                 <li>분량: 최소 500자, 최대 1,000자</li>
               </ul>
