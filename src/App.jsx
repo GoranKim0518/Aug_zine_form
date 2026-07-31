@@ -42,7 +42,7 @@ export default function App() {
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (Object.keys(formData).length > 0 && currentStep <= TOTAL_STEPS) {
+      if (formData && Object.keys(formData).length > 0 && currentStep <= TOTAL_STEPS) {
         e.preventDefault();
         e.returnValue = '';
       }
@@ -52,13 +52,11 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [formData, currentStep]);
 
-  // Step 1 완료 후 실행
   const handleNextStep = useCallback((step1Data) => {
     setFormData((prev) => ({ ...prev, ...step1Data }));
     setCurrentStep(2);
   }, [setFormData]);
 
-  // Step 2에서 이전 버튼 클릭 시 실행
   const handlePrevStep = useCallback((step2Data) => {
     if (step2Data) {
       setFormData((prev) => ({ ...prev, ...step2Data }));
@@ -67,7 +65,6 @@ export default function App() {
     setCurrentStep(1);
   }, [setFormData]);
 
-  // 최종 제출
   const handleSubmitForm = async (step2Data) => {
     if (isSubmitting) return;
 
@@ -81,12 +78,14 @@ export default function App() {
     }
 
     const finalData = { ...formData, ...step2Data };
-    setFormData(finalData); // 최신 데이터로 스토리지 싱크
 
+    // 🔥 [전화번호 null 처리] 11자리 정상 번호가 아니면 null 전송
     let formattedPhone = finalData.phone || '';
     const rawDigits = formattedPhone.replace(/[^0-9]/g, '');
     if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
       formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
+    } else {
+      formattedPhone = null; // 선택 입력 미작성 시 DB에 NULL 저장
     }
 
     const controller = new AbortController();
@@ -99,8 +98,8 @@ export default function App() {
           {
             content: finalData.content,
             pen_name_intro: finalData.bio || '',
-            phone: formattedPhone,
-            instagram_id: finalData.instagram || null,
+            phone: formattedPhone, // null 또는 정규화 번호
+            instagram_id: finalData.instagram ? finalData.instagram : null, // null 처리
             referral_source: finalData.source || '',
             referral_source_other: finalData.source === '기타' ? finalData.sourceCustom : null,
           },
@@ -112,7 +111,11 @@ export default function App() {
       if (error) throw error;
 
       trackSubmitSuccess(finalData.source || '');
+      
+      // 🔥 [핵심 버그 수정] LocalStorage 삭제 + App React State 동시 초기화
       removeFormData();
+      setFormData({});
+
       setCurrentStep(3);
     } catch (err) {
       clearTimeout(timeoutId);
@@ -130,9 +133,10 @@ export default function App() {
 
   const handleReset = useCallback(() => {
     removeFormData();
+    setFormData({});
     setSubmitError(null);
     setCurrentStep(1);
-  }, [removeFormData]);
+  }, [removeFormData, setFormData]);
 
   return (
     <main className="min-h-screen bg-white text-gray-900 antialiased selection:bg-purple-100">

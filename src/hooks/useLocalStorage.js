@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function useLocalStorage(key, initialValue) {
-  // 1. 초기값 설정: localStorage에 저장된 데이터가 있으면 불러오고, 없으면 initialValue 사용
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -12,10 +11,13 @@ export function useLocalStorage(key, initialValue) {
     }
   });
 
-  // 2. State가 변경될 때마다 localStorage 업데이트
   useEffect(() => {
     try {
-      if (storedValue === null || storedValue === undefined) {
+      if (
+        storedValue === null ||
+        storedValue === undefined ||
+        (typeof storedValue === 'object' && Object.keys(storedValue).length === 0)
+      ) {
         window.localStorage.removeItem(key);
       } else {
         window.localStorage.setItem(key, JSON.stringify(storedValue));
@@ -25,15 +27,15 @@ export function useLocalStorage(key, initialValue) {
     }
   }, [key, storedValue]);
 
-  // 3. localStorage 데이터 삭제 함수
-  const removeItem = () => {
+  // removeItem 호출 시 메모리 state와 로컬 스토리지 모두 완벽 비움
+  const removeItem = useCallback(() => {
     try {
       window.localStorage.removeItem(key);
       setStoredValue(initialValue);
     } catch (error) {
       console.error(`localStorage 삭제 에러 (${key}):`, error);
     }
-  };
+  }, [key, initialValue]);
 
   return [storedValue, setStoredValue, removeItem];
 }
