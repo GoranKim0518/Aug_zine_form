@@ -13,8 +13,9 @@ import {
 } from './lib/analytics.js';
 import ascii from './ascii.txt?raw';
 
-console.log(`%c${ascii}`,
-  'font-family: monospace; line-height: 1.0; font-size: 11px;');
+if (ascii) {
+  console.log(`%c${ascii}`, 'font-family: monospace; line-height: 1.0; font-size: 11px;');
+}
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -26,6 +27,9 @@ export default function App() {
 
   useEffect(() => {
     trackPageOpen();
+    if (!window.history.state || typeof window.history.state.step !== 'number') {
+      window.history.replaceState({ step: 1 }, '', '');
+    }
   }, []);
 
   useEffect(() => {
@@ -36,7 +40,6 @@ export default function App() {
     }
   }, [currentStep]);
 
-  // 뒤로가기(popstate) 이벤트 수신 등록 (브라우저 뒤로가기 버튼 연동)
   useEffect(() => {
     const handlePopState = (e) => {
       if (e.state && typeof e.state.step === 'number') {
@@ -75,14 +78,13 @@ export default function App() {
     });
   }, [setFormData]);
 
-  // 이전 버튼 클릭 시 history.back() 비동기 딜레이 없이 UI 즉시 갱신
   const handlePrevStep = useCallback(() => {
     setSubmitError(null);
-    setCurrentStep((prev) => {
-      const prevStep = Math.max(prev - 1, 1);
-      window.history.pushState({ step: prevStep }, '', '');
-      return prevStep;
-    });
+    if (window.history.state?.step > 1) {
+      window.history.back();
+    } else {
+      setCurrentStep(1);
+    }
   }, []);
 
   const handleSubmitForm = async (step2Data) => {
@@ -97,10 +99,17 @@ export default function App() {
 
     const finalData = { ...formData, ...step2Data };
 
-    let formattedPhone = finalData.phone || '';
-    const rawDigits = formattedPhone.replace(/[^0-9]/g, '');
-    if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
-      formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
+    let formattedPhone = null;
+    if (finalData.phone) {
+      const rawDigits = finalData.phone.replace(/[^0-9]/g, '');
+      if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
+        formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
+      }
+    }
+
+    let cleanedInstagram = finalData.instagram ? finalData.instagram.trim() : null;
+    if (cleanedInstagram && cleanedInstagram.startsWith('@')) {
+      cleanedInstagram = cleanedInstagram.slice(1);
     }
 
     const controller = new AbortController();
@@ -111,12 +120,14 @@ export default function App() {
         .from('submissions')
         .insert([
           {
-            content: finalData.content,
+            content: finalData.content || '',
             pen_name_intro: finalData.bio || '',
             phone: formattedPhone,
-            instagram_id: finalData.instagram || null,
+            instagram_id: cleanedInstagram,
             referral_source: finalData.source || '',
-            referral_source_other: finalData.source === '기타' ? finalData.sourceCustom : null,
+            referral_source_other: finalData.source === '기타' ? finalData.sourceCustom || null : null,
+            utm_content: null,
+            utm_term: null,
           },
         ])
         .abortSignal(controller.signal);
@@ -128,7 +139,7 @@ export default function App() {
       trackSubmitSuccess(finalData.source || '');
       removeFormData();
       
-      window.history.pushState({ step: 3 }, '', '');
+      window.history.replaceState({ step: 3 }, '', '');
       setCurrentStep(3);
     } catch (err) {
       clearTimeout(timeoutId);
@@ -147,12 +158,12 @@ export default function App() {
   const handleReset = useCallback(() => {
     removeFormData();
     setSubmitError(null);
-    window.history.pushState({ step: 1 }, '', '');
+    window.history.replaceState({ step: 1 }, '', '');
     setCurrentStep(1);
   }, [removeFormData]);
 
   return (
-    <main className="min-h-screen bg-white text-gray-900 antialiased selection:bg-purple-100">
+    <main className="min-h-screen bg-purple-50/30 text-gray-900 antialiased selection:bg-purple-100">
       {currentStep <= TOTAL_STEPS && (
         <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
       )}

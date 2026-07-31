@@ -46,11 +46,9 @@ export default function Step2({
     }
   }, [defaultValues, reset]);
 
-  // UI 조건부 렌더링용 선택된 source 관찰
   const selectedSource = watch('source');
   const INPUT_LENGTH = 100;
 
-  // 폼 입력값 변경 시 부모 컴포넌트에 안전하게 전달 (watch 구독 사용으로 재렌더링 방지)
   useEffect(() => {
     if (typeof onUpdate !== 'function') return;
 
@@ -62,7 +60,6 @@ export default function Step2({
   }, [watch, onUpdate]);
 
   const onSubmit = (data) => {
-    // 제출 시 혹시 모를 공백이나 국가번호(+82)가 섞여있다면 순수 숫자로 정제해서 전달
     const cleanData = {
       ...data,
       phone: data.phone ? data.phone.replace(/^\+82\s?/, '0').replace(/[^0-9]/g, '') : '',
@@ -79,7 +76,6 @@ export default function Step2({
   return (
     <div className="max-w-2xl mx-auto">
       <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6 sm:space-y-8">
-        {/* 구글 폼 섹션 2 안내 카드 */}
         <div className="space-y-1 border-b border-gray-200/80 pb-4">
           <h1 className="text-base sm:text-lg text-gray-900 font-bold leading-relaxed">
             매거진과 인스타그램 카드뉴스 제작을 위한 정보 입력 페이지입니다.
@@ -89,7 +85,6 @@ export default function Step2({
           </p>
         </div>
 
-        {/* 1. 필명 및 소개 */}
         <div className="space-y-1.5">
           <label htmlFor="bio-input" className="block text-base font-bold text-gray-900">
             필명 및 한줄소개 <span className="text-red-500">*</span>
@@ -114,7 +109,6 @@ export default function Step2({
           <ErrorMessage message={errors.bio?.message} />
         </div>
 
-        {/* 2. 전화번호 (선택 항목) */}
         <div className="space-y-1.5">
           <label htmlFor="phone-input" className="block text-base font-bold text-gray-900">
             전화번호 <span className="text-gray-500 font-normal">(선택)</span>
@@ -136,7 +130,6 @@ export default function Step2({
               },
             })}
             onInput={(e) => {
-              // 키보드/붙여넣기 상관없이 숫자가 아닌 문자 즉시 삭제
               e.target.value = e.target.value.replace(/\D/g, '');
             }}
             onFocus={() => trackFieldFocus('phone', 2)}
@@ -147,7 +140,6 @@ export default function Step2({
           <ErrorMessage message={errors.phone?.message} />
         </div>
 
-        {/* 3. 인스타그램 계정 */}
         <div className="space-y-1.5">
           <label htmlFor="instagram-input" className="block text-base font-bold text-gray-900">
             인스타그램 계정 <span className="text-gray-500 font-normal">(선택)</span>
@@ -171,7 +163,6 @@ export default function Step2({
           />
         </div>
 
-        {/* 4. 유입 경로 */}
         <div className="space-y-2.5">
           <label className="block text-base font-bold text-gray-900">
             유입 경로 <span className="text-red-500">*</span>
@@ -183,7 +174,7 @@ export default function Step2({
               return (
                 <label
                   key={option}
-                  className={`flex items-center justify-center h-12 px-3 rounded-xl border text-sm sm:text-base font-medium cursor-pointer transition-all active:scale-[0.98] select-none ${
+                  className={`flex items-center justify-center h-12 px-3 rounded-xl border text-sm sm:text-base font-medium cursor-pointer transition-all active:scale-[0.98] select-none focus-within:ring-2 focus-within:ring-purple-600/40 ${
                     isChecked
                       ? 'border-purple-600 bg-purple-50 text-purple-700 font-bold shadow-xs'
                       : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300'
@@ -218,14 +209,12 @@ export default function Step2({
           )}
         </div>
 
-        {/* 에러 박스 */}
         {submitError && (
           <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium leading-relaxed">
             {submitError}
           </div>
         )}
 
-        {/* 하단 버튼 */}
         <div className="flex justify-between items-center pt-1 gap-3">
           <button
             type="button"
