@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+:root {
+  --font-sans: 'Wanted Sans Variable', 'Wanted Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+
 html, body {
-  background-color: #f5f3ff; /* bg-purple-50 연보라색 배경 지정 */
+  font-family: var(--font-sans);
+  background-color: #f5f3ff;
 }

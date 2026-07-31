@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import ErrorMessage from './ErrorMessage.jsx';
 import {
@@ -10,7 +9,6 @@ import {
 export default function Step2({
   onNext,
   onPrev,
-  onUpdate,
   defaultValues,
   isSubmitting,
   submitError,
@@ -19,7 +17,7 @@ export default function Step2({
     register,
     handleSubmit,
     watch,
-    reset,
+    getValues,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -32,32 +30,8 @@ export default function Step2({
     mode: 'onChange',
   });
 
-  const isInitialized = useRef(false);
-  useEffect(() => {
-    if (!isInitialized.current && defaultValues && Object.keys(defaultValues).length > 0) {
-      reset({
-        bio: defaultValues.bio || '',
-        phone: defaultValues.phone || '',
-        instagram: defaultValues.instagram || '',
-        source: defaultValues.source || '',
-        sourceCustom: defaultValues.sourceCustom || '',
-      });
-      isInitialized.current = true;
-    }
-  }, [defaultValues, reset]);
-
   const selectedSource = watch('source');
   const INPUT_LENGTH = 100;
-
-  useEffect(() => {
-    if (typeof onUpdate !== 'function') return;
-
-    const subscription = watch((value) => {
-      onUpdate(value);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch, onUpdate]);
 
   const onSubmit = (data) => {
     const cleanData = {
@@ -65,6 +39,10 @@ export default function Step2({
       phone: data.phone ? data.phone.replace(/^\+82\s?/, '0').replace(/[^0-9]/g, '') : '',
     };
     onNext(cleanData);
+  };
+
+  const handleBack = () => {
+    onPrev(getValues());
   };
 
   const onError = (formErrors) => {
@@ -85,6 +63,7 @@ export default function Step2({
           </p>
         </div>
 
+        {/* 1. 필명 및 소개 */}
         <div className="space-y-1.5">
           <label htmlFor="bio-input" className="block text-base font-bold text-gray-900">
             필명 및 한줄소개 <span className="text-red-500">*</span>
@@ -106,9 +85,12 @@ export default function Step2({
             placeholder="예: 노유캐 / 일상의 순간을 기록합니다."
             className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all shadow-xs"
           />
-          <ErrorMessage message={errors.bio?.message} />
+          <div className="h-5 flex items-center pt-0.5">
+            <ErrorMessage message={errors.bio?.message} />
+          </div>
         </div>
 
+        {/* 2. 전화번호 */}
         <div className="space-y-1.5">
           <label htmlFor="phone-input" className="block text-base font-bold text-gray-900">
             전화번호 <span className="text-gray-500 font-normal">(선택)</span>
@@ -137,9 +119,12 @@ export default function Step2({
             placeholder="01012345678"
             className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all shadow-xs"
           />
-          <ErrorMessage message={errors.phone?.message} />
+          <div className="h-5 flex items-center pt-0.5">
+            <ErrorMessage message={errors.phone?.message} />
+          </div>
         </div>
 
+        {/* 3. 인스타그램 계정 */}
         <div className="space-y-1.5">
           <label htmlFor="instagram-input" className="block text-base font-bold text-gray-900">
             인스타그램 계정 <span className="text-gray-500 font-normal">(선택)</span>
@@ -163,6 +148,7 @@ export default function Step2({
           />
         </div>
 
+        {/* 4. 유입 경로 */}
         <div className="space-y-2.5">
           <label className="block text-base font-bold text-gray-900">
             유입 경로 <span className="text-red-500">*</span>
@@ -174,7 +160,7 @@ export default function Step2({
               return (
                 <label
                   key={option}
-                  className={`flex items-center justify-center h-12 px-3 rounded-xl border text-sm sm:text-base font-medium cursor-pointer transition-all active:scale-[0.98] select-none focus-within:ring-2 focus-within:ring-purple-600/40 ${
+                  className={`flex items-center justify-center h-12 px-3 rounded-xl border text-sm sm:text-base font-medium cursor-pointer transition-all active:scale-[0.98] select-none ${
                     isChecked
                       ? 'border-purple-600 bg-purple-50 text-purple-700 font-bold shadow-xs'
                       : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300'
@@ -191,7 +177,9 @@ export default function Step2({
               );
             })}
           </div>
-          <ErrorMessage message={errors.source?.message} />
+          <div className="h-5 flex items-center pt-0.5">
+            <ErrorMessage message={errors.source?.message} />
+          </div>
 
           {selectedSource === '기타' && (
             <div className="pt-1">
@@ -199,12 +187,14 @@ export default function Step2({
                 type="text"
                 maxLength={INPUT_LENGTH}
                 {...register('sourceCustom', {
-                  required: selectedSource === '기타' ? '알게 된 경로를 선택해 주세요.' : false,
+                  required: selectedSource === '기타' ? '알게 된 경로를 입력해 주세요.' : false,
                 })}
                 placeholder="알게 된 경로를 입력해 주세요."
                 className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all shadow-xs"
               />
-              <ErrorMessage message={errors.sourceCustom?.message} />
+              <div className="h-5 flex items-center pt-0.5">
+                <ErrorMessage message={errors.sourceCustom?.message} />
+              </div>
             </div>
           )}
         </div>
@@ -218,7 +208,7 @@ export default function Step2({
         <div className="flex justify-between items-center pt-1 gap-3">
           <button
             type="button"
-            onClick={onPrev}
+            onClick={handleBack}
             disabled={isSubmitting}
             className="flex-1 sm:flex-none min-h-12.5 px-6 py-3 rounded-xl font-bold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50"
           >

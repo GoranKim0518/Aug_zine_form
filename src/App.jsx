@@ -14,7 +14,10 @@ import {
 import ascii from './ascii.txt?raw';
 
 if (ascii) {
-  console.log(`%c${ascii}`, 'font-family: monospace; line-height: 1.0; font-size: 11px;');
+  console.log(
+    `%c${ascii}`,
+    'font-family: Menlo, Monaco, monospace; font-size: 9.5px; line-height: 1.0; letter-spacing: -0.5px;'
+  );
 }
 
 export default function App() {
@@ -27,9 +30,6 @@ export default function App() {
 
   useEffect(() => {
     trackPageOpen();
-    if (!window.history.state || typeof window.history.state.step !== 'number') {
-      window.history.replaceState({ step: 1 }, '', '');
-    }
   }, []);
 
   useEffect(() => {
@@ -39,19 +39,6 @@ export default function App() {
       trackStep2View();
     }
   }, [currentStep]);
-
-  useEffect(() => {
-    const handlePopState = (e) => {
-      if (e.state && typeof e.state.step === 'number') {
-        setCurrentStep(e.state.step);
-      } else {
-        setCurrentStep(1);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -65,29 +52,25 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [formData, currentStep]);
 
-  const handleUpdateForm = useCallback((stepData) => {
-    setFormData((prev) => ({ ...prev, ...stepData }));
+  // Step 1 완료 후 실행
+  const handleNextStep = useCallback((step1Data) => {
+    setFormData((prev) => ({ ...prev, ...step1Data }));
+    setCurrentStep(2);
   }, [setFormData]);
 
-  const handleNextStep = useCallback((stepData) => {
-    setFormData((prev) => ({ ...prev, ...stepData }));
-    setCurrentStep((prev) => {
-      const nextStep = prev + 1;
-      window.history.pushState({ step: nextStep }, '', '');
-      return nextStep;
-    });
-  }, [setFormData]);
-
-  const handlePrevStep = useCallback(() => {
-    setSubmitError(null);
-    if (window.history.state?.step > 1) {
-      window.history.back();
-    } else {
-      setCurrentStep(1);
+  // Step 2에서 이전 버튼 클릭 시 실행
+  const handlePrevStep = useCallback((step2Data) => {
+    if (step2Data) {
+      setFormData((prev) => ({ ...prev, ...step2Data }));
     }
-  }, []);
+    setSubmitError(null);
+    setCurrentStep(1);
+  }, [setFormData]);
 
+  // 최종 제출
   const handleSubmitForm = async (step2Data) => {
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -98,18 +81,12 @@ export default function App() {
     }
 
     const finalData = { ...formData, ...step2Data };
+    setFormData(finalData); // 최신 데이터로 스토리지 싱크
 
-    let formattedPhone = null;
-    if (finalData.phone) {
-      const rawDigits = finalData.phone.replace(/[^0-9]/g, '');
-      if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
-        formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
-      }
-    }
-
-    let cleanedInstagram = finalData.instagram ? finalData.instagram.trim() : null;
-    if (cleanedInstagram && cleanedInstagram.startsWith('@')) {
-      cleanedInstagram = cleanedInstagram.slice(1);
+    let formattedPhone = finalData.phone || '';
+    const rawDigits = formattedPhone.replace(/[^0-9]/g, '');
+    if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
+      formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
     }
 
     const controller = new AbortController();
@@ -120,14 +97,12 @@ export default function App() {
         .from('submissions')
         .insert([
           {
-            content: finalData.content || '',
+            content: finalData.content,
             pen_name_intro: finalData.bio || '',
             phone: formattedPhone,
-            instagram_id: cleanedInstagram,
+            instagram_id: finalData.instagram || null,
             referral_source: finalData.source || '',
-            referral_source_other: finalData.source === '기타' ? finalData.sourceCustom || null : null,
-            utm_content: null,
-            utm_term: null,
+            referral_source_other: finalData.source === '기타' ? finalData.sourceCustom : null,
           },
         ])
         .abortSignal(controller.signal);
@@ -138,8 +113,6 @@ export default function App() {
 
       trackSubmitSuccess(finalData.source || '');
       removeFormData();
-      
-      window.history.replaceState({ step: 3 }, '', '');
       setCurrentStep(3);
     } catch (err) {
       clearTimeout(timeoutId);
@@ -158,12 +131,11 @@ export default function App() {
   const handleReset = useCallback(() => {
     removeFormData();
     setSubmitError(null);
-    window.history.replaceState({ step: 1 }, '', '');
     setCurrentStep(1);
   }, [removeFormData]);
 
   return (
-    <main className="min-h-screen bg-purple-50/30 text-gray-900 antialiased selection:bg-purple-100">
+    <main className="min-h-screen bg-white text-gray-900 antialiased selection:bg-purple-100">
       {currentStep <= TOTAL_STEPS && (
         <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
       )}
@@ -172,7 +144,6 @@ export default function App() {
         {currentStep === 1 && (
           <Step1
             onNext={handleNextStep}
-            onUpdate={handleUpdateForm}
             defaultValues={formData}
           />
         )}
@@ -181,7 +152,6 @@ export default function App() {
           <Step2
             onNext={handleSubmitForm}
             onPrev={handlePrevStep}
-            onUpdate={handleUpdateForm}
             defaultValues={formData}
             isSubmitting={isSubmitting}
             submitError={submitError}

@@ -14,6 +14,7 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
     handleSubmit,
     watch,
     reset,
+    trigger,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -26,9 +27,11 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
   useEffect(() => {
     if (!isInitialized.current && defaultValues?.content) {
       reset({ content: defaultValues.content });
+      // 🔥 [4번 문제 해결] 복원된 데이터의 유효성 검사 상태를 1회 동기화 (재렌더링 연산 과부하 0%)
+      trigger('content');
       isInitialized.current = true;
     }
-  }, [defaultValues?.content, reset]);
+  }, [defaultValues?.content, reset, trigger]);
 
   const contentValue = watch('content') || '';
   const charCount = contentValue.length;
@@ -60,15 +63,14 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
   return (
     <div className="max-w-2xl mx-auto">
       <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8 sm:space-y-10">
-        
         <div className="space-y-6">
           <div className="border-b border-gray-200/80 pb-5">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 leading-snug">
+            <h1 className="text-4xl sm:text-4xl font-bold tracking-tight text-gray-900 leading-snug">
               NO-TE 8월 키워드 &lt;온도&gt; 투고하기
             </h1>
           </div>
 
-          <div className="text-base text-gray-800 leading-relaxed space-y-4">
+          <div className="text-base sm:text-base text-gray-800 leading-relaxed space-y-4">
             <div className="space-y-1">
               <b className="block text-gray-900 font-bold text-base sm:text-lg">
                 NO-TE(Nowon-Text): 노원의 이야기를 기록하다
@@ -80,13 +82,23 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
 
             <div className="pt-1">
               <span className="font-semibold text-gray-900">📍 2026년 8월 키워드 : &lt;온도&gt;</span>
+              <p className="pt-0.5 text-gray-700">
+                '온도'에 대한 여러분만의 글을 써 주세요.{' '}
+                <a
+                  href="#"
+                  title="에디터가 드리는 힌트!"
+                  className="text-purple-600 font-semibold underline underline-offset-4 hover:text-purple-800 transition-colors"
+                >
+                  예시
+                </a>
+              </p>
             </div>
 
             <div className="pt-1 text-gray-900">
               <strong>로컬 매거진 특성상, 노원과 관련된</strong> 이야기를 우선 선정하고 있습니다.
             </div>
 
-            <div className="p-4 sm:p-5 bg-white border border-gray-200/70 rounded-2xl space-y-3 mt-2 shadow-xs">
+            <div className="p-4 sm:p-5 bg-gray-50/90 border border-gray-200/70 rounded-2xl space-y-3 mt-2">
               <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-gray-800 font-medium leading-relaxed">
                 <li>모집 기간: 8월 1일(토) ~ 8월 31일(월)</li>
                 <li>활동 범위가 노원이라면 누구나 참여 가능</li>
@@ -115,7 +127,7 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
             {...register('content', {
               required: '글을 입력해 주세요.',
               minLength: { value: 500, message: '최소 500자 이상 입력해 주세요.' },
-              maxLength: { value: 1000, message: '최대 1,000자까지 입력 가능합니다.' },
+              maxLength: { value: 1000, message: '최대 1000자까지 입력 가능합니다.' },
             })}
             onFocus={() => trackFieldFocus('content', 1)}
             onBlur={() => trackFieldBlur('content', 1, charCount > 0)}
@@ -128,8 +140,8 @@ export default function Step1({ onNext, onUpdate, defaultValues }) {
             <div>
               <ErrorMessage message={errors.content?.message} />
             </div>
-            <div className={`font-mono text-xs sm:text-sm ${!isValidLength ? 'text-red-500 font-semibold' : 'text-purple-600 font-bold'}`}>
-              {charCount} / 1000자
+            <div className={`font-mono text-xs sm:text-sm ${!isValidLength ? 'text-gray-400' : 'text-purple-600 font-bold'}`}>
+              {charCount} / 1000자 (최소 500자)
             </div>
           </div>
         </div>
