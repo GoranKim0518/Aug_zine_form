@@ -68,11 +68,9 @@ export default function Step2({
           <label htmlFor="bio-input" className="block text-base font-bold text-gray-900">
             필명 및 한줄소개 <span className="text-red-500">*</span>
           </label>
-
           <div className="text-sm text-gray-600 leading-relaxed">
             글과 함께 게재할 필명을 남겨주세요. 본명과 닉네임 모두 가능합니다.
           </div>
-
           <input
             id="bio-input"
             type="text"
@@ -95,11 +93,9 @@ export default function Step2({
           <label htmlFor="phone-input" className="block text-base font-bold text-gray-900">
             전화번호 <span className="text-gray-500 font-normal">(선택)</span>
           </label>
-
           <div className="text-sm text-gray-600 leading-relaxed">
             투고 결과 안내 및 Zine 수령을 위한 연락처입니다. (접수 후 20일 이내 안내)
           </div>
-
           <input
             id="phone-input"
             type="tel"
@@ -129,11 +125,9 @@ export default function Step2({
           <label htmlFor="instagram-input" className="block text-base font-bold text-gray-900">
             인스타그램 계정 <span className="text-gray-500 font-normal">(선택)</span>
           </label>
-
           <div className="text-sm text-gray-600 leading-relaxed">
             적어주신 분에 한하여, 인스타그램 카드뉴스와 Zine에 필명과 함께 게재됩니다.
           </div>
-
           <input
             id="instagram-input"
             type="text"
@@ -153,7 +147,6 @@ export default function Step2({
           <label className="block text-base font-bold text-gray-900">
             유입 경로 <span className="text-red-500">*</span>
           </label>
-
           <div className="grid grid-cols-2 gap-2">
             {['인스타그램', '지인 추천', '에브리타임', '기타'].map((option) => {
               const isChecked = selectedSource === option;
@@ -170,6 +163,8 @@ export default function Step2({
                     type="radio"
                     value={option}
                     {...register('source', { required: '알게 된 경로를 선택해 주세요.' })}
+                    onFocus={() => trackFieldFocus('source', 2)}
+                    onClick={() => trackFieldBlur('source', 2, true)}
                     className="sr-only"
                   />
                   <span>{option}</span>
@@ -189,6 +184,8 @@ export default function Step2({
                 {...register('sourceCustom', {
                   required: selectedSource === '기타' ? '알게 된 경로를 입력해 주세요.' : false,
                 })}
+                onFocus={() => trackFieldFocus('sourceCustom', 2)}
+                onBlur={(e) => trackFieldBlur('sourceCustom', 2, e.target.value.length > 0)}
                 placeholder="알게 된 경로를 입력해 주세요."
                 className="w-full h-12 px-3.5 text-base text-gray-800 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all shadow-xs"
               />

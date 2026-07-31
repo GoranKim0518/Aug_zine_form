@@ -79,13 +79,12 @@ export default function App() {
 
     const finalData = { ...formData, ...step2Data };
 
-    // 🔥 [전화번호 null 처리] 11자리 정상 번호가 아니면 null 전송
     let formattedPhone = finalData.phone || '';
     const rawDigits = formattedPhone.replace(/[^0-9]/g, '');
     if (rawDigits.length === 11 && rawDigits.startsWith('010')) {
       formattedPhone = `${rawDigits.slice(0, 3)}-${rawDigits.slice(3, 7)}-${rawDigits.slice(7)}`;
     } else {
-      formattedPhone = null; // 선택 입력 미작성 시 DB에 NULL 저장
+      formattedPhone = null;
     }
 
     const controller = new AbortController();
@@ -98,8 +97,8 @@ export default function App() {
           {
             content: finalData.content,
             pen_name_intro: finalData.bio || '',
-            phone: formattedPhone, // null 또는 정규화 번호
-            instagram_id: finalData.instagram ? finalData.instagram : null, // null 처리
+            phone: formattedPhone,
+            instagram_id: finalData.instagram ? finalData.instagram : null,
             referral_source: finalData.source || '',
             referral_source_other: finalData.source === '기타' ? finalData.sourceCustom : null,
           },
@@ -110,9 +109,9 @@ export default function App() {
 
       if (error) throw error;
 
-      trackSubmitSuccess(finalData.source || '');
+      // 🔥 수정: 인자 없이 호출하여 analytics.js의 UTM/Referrer 자동 파싱 작동
+      trackSubmitSuccess();
       
-      // 🔥 [핵심 버그 수정] LocalStorage 삭제 + App React State 동시 초기화
       removeFormData();
       setFormData({});
 
